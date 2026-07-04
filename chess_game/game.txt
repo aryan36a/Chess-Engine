@@ -1,0 +1,527 @@
+#include<stdio.h>
+#include<stdint.h>
+#include<raylib.h>
+#define BOARD_SIZE 8
+#define TILE_SIZE 128
+
+typedef enum{
+    EMPTY=0,
+
+    WHITE_PAWN,
+    WHITE_ROOK,
+    WHITE_KNIGHT,
+    WHITE_BISHOP,
+    WHITE_QUEEN,
+    WHITE_KING,
+
+    BLACK_PAWN,
+    BLACK_ROOK,
+    BLACK_KNIGHT,
+    BLACK_BISHOP,
+    BLACK_QUEEN,
+    BLACK_KING
+}Piece;
+
+typedef struct
+{
+    uint64_t whitePawns;
+    uint64_t whiteKnights;
+    uint64_t whiteBishops;
+    uint64_t whiteRooks;
+    uint64_t whiteQueens;
+    uint64_t whiteKing;
+
+    uint64_t blackPawns;
+    uint64_t blackKnights;
+    uint64_t blackBishops;
+    uint64_t blackRooks;
+    uint64_t blackQueens;
+    uint64_t blackKing;
+
+    uint64_t whitePieces;
+    uint64_t blackPieces;
+    uint64_t occupied;
+
+} Board;
+
+typedef struct{
+    int from;
+    int to;
+}Move;
+
+Move moves[32];
+int moveCount=0;
+int selectedSquare=-1;
+Piece selectedPiece=EMPTY;
+
+Board board;
+
+
+Texture2D pieceTextures[13];
+
+//Prototypes
+void LoadPieceTextures(void);
+void UnloadPieceTextures(void);
+void DrawPiece(Piece piece,int row,int col);
+void initBoard(void);
+bool isBitSet(uint64_t bitboard, int square);
+Piece GetPieceAtSquare(int square);
+void DrawBoardPieces(void);
+bool isLegalMove(int square);
+
+
+//Piece Move Generation Prototype
+void generateWhitePawnMoves(int square);
+void generateBlackPawnMoves(int square);
+
+//Piece Moving Prototype
+void moveWhitePawn(int from, int to);
+void moveBlackPawn(int from, int to);
+
+//Capture Prototype
+void removePiece(int square);
+
+int main(void){
+
+    InitWindow(BOARD_SIZE*TILE_SIZE,BOARD_SIZE*TILE_SIZE,"CHESS");
+
+    LoadPieceTextures();
+    initBoard();
+    //Hover Colour
+    Color hover=(Color){144,238,144,150};
+    Color selected=(Color){173,216,255,150};
+    int sRow=-1;
+    int sCol=-1;
+    int hRow=-1;
+    int hCol=-1;
+
+    while(!WindowShouldClose()){
+
+        Vector2 mouse=GetMousePosition();
+        
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);        
+        //Render Board
+        for(int col=0;col<BOARD_SIZE;col++){
+            for(int row=0;row<BOARD_SIZE;row++){
+                Rectangle square={col*TILE_SIZE,row*TILE_SIZE,TILE_SIZE,TILE_SIZE,};
+                if((row+col)%2!=0){
+                    //Black Squares
+                    DrawRectangleRec(square,GRAY);
+                }else{
+                    //White Squared
+                    DrawRectangleRec(square,WHITE);
+                }
+                //Hover Square
+                if(CheckCollisionPointRec(mouse,square)){
+                    DrawRectangleRec(square,hover);
+                }
+            }
+        }
+        //Selected Square
+if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+    sRow=mouse.y/TILE_SIZE;
+    sCol=mouse.x/TILE_SIZE;
+
+    int clickedSquare=sRow*8+sCol;
+
+    if(selectedSquare!=-1){
+        if(isLegalMove(clickedSquare)){
+            switch(selectedPiece){
+                case WHITE_PAWN:
+                    moveWhitePawn(selectedSquare,clickedSquare);
+                    break;
+
+                case BLACK_PAWN:
+                    moveBlackPawn(selectedSquare,clickedSquare);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        selectedSquare=-1;
+        selectedPiece=EMPTY;
+        moveCount=0;
+    }
+    else{
+        Piece piece=GetPieceAtSquare(clickedSquare);
+
+        //If-else if Ladder
+        if(piece==WHITE_PAWN){
+            selectedSquare=clickedSquare;
+            selectedPiece=piece;
+            generateWhitePawnMoves(selectedSquare);
+        }else if(piece==BLACK_PAWN){
+            selectedSquare=clickedSquare;
+            selectedPiece=piece;
+            generateBlackPawnMoves(selectedSquare);
+        }
+
+    }
+}
+
+        //Display Selected square
+        if(sRow!=-1&&sCol!=-1){
+            DrawRectangle(sCol*TILE_SIZE,sRow*TILE_SIZE,TILE_SIZE,TILE_SIZE,selected);
+        }
+
+        //Draw Pieces(HardCoded)
+        DrawBoardPieces();
+        for(int i=0;i<moveCount;i++){
+            int row=moves[i].to/8;
+            int col=moves[i].to%8;
+
+            DrawCircle(col*TILE_SIZE+TILE_SIZE/2,row*TILE_SIZE+TILE_SIZE/2,15,GREEN);
+        }
+
+
+        //FPS Display
+        DrawFPS(10,10);
+    EndDrawing();        
+    }
+    UnloadPieceTextures();
+    CloseWindow();
+    return 0;
+}
+
+//Texture Loading
+void LoadPieceTextures(void){
+
+    pieceTextures[WHITE_PAWN]   = LoadTexture("../assets/pieces/white-pawn.png");
+    pieceTextures[WHITE_KNIGHT] = LoadTexture("../assets/pieces/white-knight.png");
+    pieceTextures[WHITE_BISHOP] = LoadTexture("../assets/pieces/white-bishop.png");
+    pieceTextures[WHITE_ROOK]   = LoadTexture("../assets/pieces/white-rook.png");
+    pieceTextures[WHITE_QUEEN]  = LoadTexture("../assets/pieces/white-queen.png");
+    pieceTextures[WHITE_KING]   = LoadTexture("../assets/pieces/white-king.png");
+
+    pieceTextures[BLACK_PAWN]   = LoadTexture("../assets/pieces/black-pawn.png");
+    pieceTextures[BLACK_KNIGHT] = LoadTexture("../assets/pieces/black-knight.png");
+    pieceTextures[BLACK_BISHOP] = LoadTexture("../assets/pieces/black-bishop.png");
+    pieceTextures[BLACK_ROOK]   = LoadTexture("../assets/pieces/black-rook.png");
+    pieceTextures[BLACK_QUEEN]  = LoadTexture("../assets/pieces/black-queen.png");
+    pieceTextures[BLACK_KING]   = LoadTexture("../assets/pieces/black-king.png");
+}
+
+//Texture Unloading
+void UnloadPieceTextures(void){
+    for(int i = WHITE_PAWN; i <= BLACK_KING; i++)
+    {
+        UnloadTexture(pieceTextures[i]);
+    }
+}
+
+//Draw Piece
+void DrawPiece(Piece piece,int row,int col){
+    DrawTexture(pieceTextures[piece],col*TILE_SIZE,row*TILE_SIZE,WHITE);
+}
+
+//Bit board
+void initBoard(void)
+
+{
+    // Clear everything
+    board.whitePawns   = 0ULL;
+    board.whiteKnights = 0ULL;
+    board.whiteBishops = 0ULL;
+    board.whiteRooks   = 0ULL;
+    board.whiteQueens  = 0ULL;
+    board.whiteKing    = 0ULL;
+
+    board.blackPawns   = 0ULL;
+    board.blackKnights = 0ULL;
+    board.blackBishops = 0ULL;
+    board.blackRooks   = 0ULL;
+    board.blackQueens  = 0ULL;
+    board.blackKing    = 0ULL;
+
+    //White Pieces
+
+    //Pawns(a2-h2)
+    for (int i = 48; i <= 55; i++)
+        board.whitePawns |= (1ULL << i);
+
+    //Rooks
+    board.whiteRooks |= (1ULL << 56);
+    board.whiteRooks |= (1ULL << 63);
+
+    //Knights
+    board.whiteKnights |= (1ULL << 57);
+    board.whiteKnights |= (1ULL << 62);
+
+    //Bishops
+    board.whiteBishops |= (1ULL << 58);
+    board.whiteBishops |= (1ULL << 61);
+
+    //Queen
+    board.whiteQueens |= (1ULL << 59);
+
+    //King
+    board.whiteKing |= (1ULL << 60);
+
+    //Black Pieces
+
+    //Pawns (a7-h7)
+    for (int i = 8; i <= 15; i++)
+        board.blackPawns |= (1ULL << i);
+
+    //Rooks
+    board.blackRooks |= (1ULL << 0);
+    board.blackRooks |= (1ULL << 7);
+
+    //Knights
+    board.blackKnights |= (1ULL << 1);
+    board.blackKnights |= (1ULL << 6);
+
+    //Bishops
+    board.blackBishops |= (1ULL << 2);
+    board.blackBishops |= (1ULL << 5);
+
+    //Queen
+    board.blackQueens |= (1ULL << 3);
+
+    //King
+    board.blackKing |= (1ULL << 4);
+
+    //Occupied Places
+    board.whitePieces =
+        board.whitePawns   |
+        board.whiteKnights |
+        board.whiteBishops |
+        board.whiteRooks   |
+        board.whiteQueens  |
+        board.whiteKing;
+
+    board.blackPieces =
+        board.blackPawns   |
+        board.blackKnights |
+        board.blackBishops |
+        board.blackRooks   |
+        board.blackQueens  |
+        board.blackKing;
+
+    board.occupied =
+        board.whitePieces |
+        board.blackPieces;
+}
+
+//Bit set check
+bool isBitSet(uint64_t bitboard, int square){
+    return (bitboard&(1ULL<<square))!=0;
+}
+
+//Get Piece
+Piece GetPieceAtSquare(int square)
+{
+    if (isBitSet(board.whitePawns, square))   return WHITE_PAWN;
+    if (isBitSet(board.whiteRooks, square))   return WHITE_ROOK;
+    if (isBitSet(board.whiteKnights, square)) return WHITE_KNIGHT;
+    if (isBitSet(board.whiteBishops, square)) return WHITE_BISHOP;
+    if (isBitSet(board.whiteQueens, square))  return WHITE_QUEEN;
+    if (isBitSet(board.whiteKing, square))    return WHITE_KING;
+
+    if (isBitSet(board.blackPawns, square))   return BLACK_PAWN;
+    if (isBitSet(board.blackRooks, square))   return BLACK_ROOK;
+    if (isBitSet(board.blackKnights, square)) return BLACK_KNIGHT;
+    if (isBitSet(board.blackBishops, square)) return BLACK_BISHOP;
+    if (isBitSet(board.blackQueens, square))  return BLACK_QUEEN;
+    if (isBitSet(board.blackKing, square))    return BLACK_KING;
+
+    return EMPTY;
+}
+
+//Draw Pieces
+void DrawBoardPieces(void)
+{
+    for(int row = 0; row < 8; row++){
+        for(int col = 0; col < 8; col++){
+            int square = row * 8 + col;
+            Piece piece = GetPieceAtSquare(square);
+            if(piece != EMPTY){
+                DrawPiece(piece, row, col);
+            }
+        }
+    }
+}
+
+//Legal Moves
+bool isLegalMove(int square){
+    for(int i=0;i<moveCount;i++){
+        if(moves[i].to==square){
+            return true;
+        }
+    }
+    return false;
+}
+
+//White Pawn Moves
+void generateWhitePawnMoves(int square){
+    int file=square%8;
+    moveCount=0;
+
+    if(file>0){
+        int captureLeft=square-9;
+
+        if(captureLeft>=0 && isBitSet(board.blackPieces,captureLeft)){
+            moves[moveCount].from=square;
+            moves[moveCount].to=captureLeft;
+            moveCount++;
+        }
+    }
+
+    if(file<7){
+        int captureRight=square-7;
+
+        if(captureRight>=0 && isBitSet(board.blackPieces,captureRight)){
+            moves[moveCount].from=square;
+            moves[moveCount].to=captureRight;
+            moveCount++;
+        }
+    }
+    int oneStep=square-8;
+    if(oneStep >=0 && !isBitSet(board.occupied,oneStep)){
+        moves[moveCount].from=square;
+        moves[moveCount].to=oneStep;
+        moveCount++;
+
+        //First Move (two places)
+        if(square>=48 && square<=55){
+            int twoStep=square-16;
+            if(!isBitSet(board.occupied,twoStep)){
+                moves[moveCount].from=square;
+                moves[moveCount].to=twoStep;
+                moveCount++;
+            }
+        }
+
+    }
+}
+
+//Black Pawn Moves
+void generateBlackPawnMoves(int square){
+    moveCount=0;
+    int oneStep=square+8;
+    if(oneStep >=0 && !isBitSet(board.occupied,oneStep)){
+        moves[moveCount].from=square;
+        moves[moveCount].to=oneStep;
+        moveCount++;
+
+        //First Move (two places)
+        if(square>=8 && square<=15){
+            int twoStep=square+16;
+            if(!isBitSet(board.occupied,twoStep)){
+                moves[moveCount].from=square;
+                moves[moveCount].to=twoStep;
+                moveCount++;
+            }
+        }
+
+    }
+}
+
+//Move White Pawn
+void moveWhitePawn(int from, int to){
+
+    removePiece(to);
+    board.whitePawns&= ~(1ULL<<from);
+
+    board.whitePawns|=(1ULL<<to);
+
+    //update occupied squares
+    board.whitePieces =
+        board.whitePawns   |
+        board.whiteKnights |
+        board.whiteBishops |
+        board.whiteRooks   |
+        board.whiteQueens  |
+        board.whiteKing;
+
+    board.occupied =
+        board.whitePieces |
+        board.blackPieces;
+}
+
+//Move Black Pawn
+void moveBlackPawn(int from, int to){
+    board.blackPawns&= ~(1ULL<<from);
+
+    board.blackPawns|=(1ULL<<to);
+
+    //update occupied squares
+    board.blackPieces =
+        board.blackPawns   |
+        board.blackKnights |
+        board.blackBishops |
+        board.blackRooks   |
+        board.blackQueens  |
+        board.blackKing;
+
+    board.occupied =
+        board.whitePieces |
+        board.blackPieces;
+}
+
+//Capture Pieces
+void removePiece(int square){
+
+    //White Pieces
+    if(isBitSet(board.whitePawns,square))
+        board.whitePawns &= ~(1ULL<<square);
+
+    else if(isBitSet(board.whiteRooks,square))
+        board.whiteRooks &= ~(1ULL<<square);
+
+    else if(isBitSet(board.whiteKnights,square))
+        board.whiteKnights &= ~(1ULL<<square);
+
+    else if(isBitSet(board.whiteBishops,square))
+        board.whiteBishops &= ~(1ULL<<square);
+
+    else if(isBitSet(board.whiteQueens,square))
+        board.whiteQueens &= ~(1ULL<<square);
+
+    else if(isBitSet(board.whiteKing,square))
+        board.whiteKing &= ~(1ULL<<square);
+
+    //Black Pieces
+    else if(isBitSet(board.blackPawns,square))
+        board.blackPawns &= ~(1ULL<<square);
+
+    else if(isBitSet(board.blackRooks,square))
+        board.blackRooks &= ~(1ULL<<square);
+
+    else if(isBitSet(board.blackKnights,square))
+        board.blackKnights &= ~(1ULL<<square);
+
+    else if(isBitSet(board.blackBishops,square))
+        board.blackBishops &= ~(1ULL<<square);
+
+    else if(isBitSet(board.blackQueens,square))
+        board.blackQueens &= ~(1ULL<<square);
+
+    else if(isBitSet(board.blackKing,square))
+        board.blackKing &= ~(1ULL<<square);
+
+    //Update Occupancy Bitboards
+    board.whitePieces =
+        board.whitePawns   |
+        board.whiteKnights |
+        board.whiteBishops |
+        board.whiteRooks   |
+        board.whiteQueens  |
+        board.whiteKing;
+
+    board.blackPieces =
+        board.blackPawns   |
+        board.blackKnights |
+        board.blackBishops |
+        board.blackRooks   |
+        board.blackQueens  |
+        board.blackKing;
+
+    board.occupied =
+        board.whitePieces |
+        board.blackPieces;
+}
