@@ -50,6 +50,15 @@ typedef struct
     uint64_t blackPieces;
     uint64_t occupied;
 
+    bool whiteKingMoved;
+    bool blackKingMoved;
+
+    bool whiteKingsideRookMoved;
+    bool whiteQueensideRookMoved;
+
+    bool blackKingsideRookMoved;
+    bool blackQueensideRookMoved;
+
 }Board;
 
 //Move Structure
@@ -93,6 +102,7 @@ void generateKingMoves(int square);
 
 //Piece Movement
 void movePiece(uint64_t *bitboard,int from,int to);
+void performCastle(int from,int to);
 //Capture
 void removePiece(int square);
 

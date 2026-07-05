@@ -35,6 +35,15 @@ void initBoard(void)
     board.blackQueens  = 0ULL;
     board.blackKing    = 0ULL;
 
+    board.whiteKingMoved = false;
+    board.blackKingMoved = false;
+
+    board.whiteKingsideRookMoved = false;
+    board.whiteQueensideRookMoved = false;
+
+    board.blackKingsideRookMoved = false;
+    board.blackQueensideRookMoved = false;
+
     //White Pieces
 
     //Pawns(a2-h2)
@@ -351,6 +360,39 @@ void generateQueenMoves(int square){
 }
 
 //King Moves
+//Castling
+void generateCastlingMoves(void){
+    if(selectedPiece==WHITE_KING){
+        if(!board.whiteKingMoved&&!board.whiteKingsideRookMoved&&isBitSet(board.whiteRooks,63)&&!isBitSet(board.occupied,61)
+            &&!isBitSet(board.occupied,62)){
+            moves[moveCount].from=60;
+            moves[moveCount].to=62;
+            moveCount++;
+        }
+        if(!board.whiteKingMoved&&!board.whiteQueensideRookMoved&&isBitSet(board.whiteRooks,56)&&!isBitSet(board.occupied,57)
+            &&!isBitSet(board.occupied,58)&&!isBitSet(board.occupied,59)){
+            moves[moveCount].from=60;
+            moves[moveCount].to=58;
+            moveCount++;
+        }
+    }
+    
+    if(selectedPiece==BLACK_KING){
+        if(!board.blackKingMoved&&!board.blackKingsideRookMoved&&isBitSet(board.blackRooks,7)&&!isBitSet(!board.occupied,5)
+            &&!isBitSet(board.occupied,6)){
+            moves[moveCount].from=4;
+            moves[moveCount].to=6;
+            moveCount++;
+        }
+        if(!board.blackKingMoved&&!board.blackQueensideRookMoved&&isBitSet(board.blackRooks,0)&&!isBitSet(board.occupied,1)
+            &&!isBitSet(board.occupied,2)&&!isBitSet(board.occupied,3)){
+            moves[moveCount].from=4;
+            moves[moveCount].to=2;
+            moveCount++;
+        }
+    }
+}
+
 void generateKingMoves(int square){
     moveCount=0;
     //King Direction Array
@@ -384,6 +426,7 @@ void generateKingMoves(int square){
         moves[moveCount].to=destination;
         moveCount++;
     }
+    generateCastlingMoves();
 }
 
 //============================================================================
@@ -395,6 +438,28 @@ void movePiece(uint64_t *bitboard, int from, int to)
     *bitboard &= ~(1ULL << from);
     *bitboard |=  (1ULL << to);
 
+    updateOccupancy();
+}
+
+//Castle
+void performCastle(int from,int to){
+    if(from==60){
+        if(to==62){
+            board.whiteRooks&=~(1ULL<<63);
+            board.whiteRooks|=(1ULL<<61);
+        }else if(to==58){
+            board.whiteRooks&=~(1ULL<<56);
+            board.whiteRooks|=(1ULL<<59);
+        }
+    }else if(from==4){
+        if(to==6){
+            board.blackRooks&=~(1ULL<<7);
+            board.blackRooks|=(1ULL<<5);
+        }else if(to==2){
+            board.blackRooks&=~(1ULL<<0);
+            board.blackRooks|=(1ULL<<3);
+        }
+    }
     updateOccupancy();
 }
 
@@ -459,4 +524,16 @@ void removePiece(int square){
     board.occupied =
         board.whitePieces |
         board.blackPieces;
+    if(square==56){
+        board.whiteQueensideRookMoved=true;
+    }
+    if(square==63){
+        board.whiteKingsideRookMoved=true;
+    }
+    if(square==0){
+        board.blackQueensideRookMoved=true;
+    }
+    if(square==7){
+        board.blackKingsideRookMoved=true;
+    }
 }

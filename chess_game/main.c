@@ -92,10 +92,20 @@ int main(void){
                             break;
                         case WHITE_ROOK:
                             movePiece(&board.whiteRooks,selectedSquare,clickedSquare);
+                            if(selectedSquare==56){
+                                board.whiteQueensideRookMoved=true;
+                            }else if(selectedSquare==63){
+                                board.whiteKingsideRookMoved=true;
+                            }
                             toggleTurn();
                             break;
                         case BLACK_ROOK:
                             movePiece(&board.blackRooks,selectedSquare,clickedSquare);
+                            if(selectedSquare==0){
+                                board.blackQueensideRookMoved=true;
+                            }else if(selectedSquare==7){
+                                board.blackKingsideRookMoved=true;
+                            }
                             toggleTurn();
                             break;
                         case WHITE_BISHOP:
@@ -116,10 +126,14 @@ int main(void){
                             break;
                         case WHITE_KING:
                             movePiece(&board.whiteKing,selectedSquare,clickedSquare);
+                            performCastle(selectedSquare,clickedSquare);
+                            board.whiteKingMoved=true;
                             toggleTurn();
                             break;
                         case BLACK_KING:
                             movePiece(&board.blackKing,selectedSquare,clickedSquare);
+                            performCastle(selectedSquare,clickedSquare);
+                            board.blackKingMoved=true;
                             toggleTurn();
                             break;
                         default:
@@ -136,32 +150,38 @@ int main(void){
                 Piece piece=GetPieceAtSquare(clickedSquare);
 
                 if(piece==EMPTY){
-                    continue;
-                }
-                printf("Turn: %d Piece:%d\n",currentTurn,piece);
-
-                if(currentTurn==WHITE_TURN&& isBlackPiece(piece)){
+                    selectedSquare=-1;
+                    selectedPiece=EMPTY;
+                    moveCount=0;
+                }else if(currentTurn==WHITE_TURN&& isBlackPiece(piece)){
+                    selectedSquare=-1;
+                    selectedPiece=EMPTY;
+                    moveCount=0;
                     printf("Wrong Colour\n");
                 }else if(currentTurn==BLACK_TURN&& isWhitePiece(piece)){
+                    selectedSquare=-1;
+                    selectedPiece=EMPTY;
+                    moveCount=0;
                     printf("Wrong Colour\n");
                 }else{
                     selectedSquare=clickedSquare;
                     selectedPiece=piece;
-                }
-                if(piece==WHITE_PAWN){
-                    generateWhitePawnMoves(selectedSquare);
-                }else if(piece==BLACK_PAWN){
-                    generateBlackPawnMoves(selectedSquare);
-                }else if(piece==WHITE_KNIGHT||piece==BLACK_KNIGHT){
-                    generateKnightMoves(selectedSquare);
-                }else if(piece==WHITE_ROOK||piece==BLACK_ROOK){
-                    generateRookMoves(selectedSquare);
-                }else if(piece==WHITE_BISHOP||piece==BLACK_BISHOP){
-                    generateBishopMoves(selectedSquare);
-                }else if(piece==WHITE_QUEEN||piece==BLACK_QUEEN){
-                    generateQueenMoves(selectedSquare);
-                }else if(piece==WHITE_KING||piece==BLACK_KING){
-                    generateKingMoves(selectedSquare);
+                 
+                    if(piece==WHITE_PAWN){
+                       generateWhitePawnMoves(selectedSquare);
+                    }else if(piece==BLACK_PAWN){
+                        generateBlackPawnMoves(selectedSquare);
+                    }else if(piece==WHITE_KNIGHT||piece==BLACK_KNIGHT){
+                        generateKnightMoves(selectedSquare);
+                    }else if(piece==WHITE_ROOK||piece==BLACK_ROOK){
+                        generateRookMoves(selectedSquare);
+                    }else if(piece==WHITE_BISHOP||piece==BLACK_BISHOP){
+                        generateBishopMoves(selectedSquare);
+                    }else if(piece==WHITE_QUEEN||piece==BLACK_QUEEN){
+                        generateQueenMoves(selectedSquare);
+                    }else if(piece==WHITE_KING||piece==BLACK_KING){
+                        generateKingMoves(selectedSquare);
+                    }
                 }
             }
         }
