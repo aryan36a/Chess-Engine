@@ -170,6 +170,14 @@ void updateOccupancy(void)
         board.blackPieces;
 }
 
+//Toggle Turn
+void toggleTurn(void){
+    if(currentTurn==WHITE_TURN){
+        currentTurn=BLACK_TURN;
+    }else{
+        currentTurn=WHITE_TURN;
+    }
+}
 
 //General Moves
 

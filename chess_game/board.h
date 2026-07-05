@@ -90,7 +90,7 @@ bool isLegalMove(int square);
 bool isWhitePiece(Piece piece);
 
 bool isBlackPiece(Piece piece);
-
+void toggleTurn(void);
 //Piece Move Generation
 void generateWhitePawnMoves(int square);
 void generateBlackPawnMoves(int square);
