@@ -13,6 +13,7 @@ void LoadPieceTextures(void);
 void UnloadPieceTextures(void);
 void DrawPiece(Piece piece,int row,int col);
 void DrawBoardPieces(void);
+void toggleTurn(void);
 
 int main(void){
 
@@ -75,40 +76,52 @@ int main(void){
 
                         case WHITE_PAWN:
                             movePiece(&board.whitePawns,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
-
                         case BLACK_PAWN:
                             movePiece(&board.blackPawns,selectedSquare,clickedSquare);
+                            toggleTurn();                            
                             break;
                         case WHITE_KNIGHT:
                             movePiece(&board.whiteKnights,selectedSquare,clickedSquare);
+                            toggleTurn();            
                             break;
                         case BLACK_KNIGHT:
                             movePiece(&board.blackKnights,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case WHITE_ROOK:
                             movePiece(&board.whiteRooks,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case BLACK_ROOK:
                             movePiece(&board.blackRooks,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case WHITE_BISHOP:
                             movePiece(&board.whiteBishops,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case BLACK_BISHOP:
                             movePiece(&board.blackBishops,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case WHITE_QUEEN:
                             movePiece(&board.whiteQueens,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case BLACK_QUEEN:
                             movePiece(&board.blackQueens,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case WHITE_KING:
                             movePiece(&board.whiteKing,selectedSquare,clickedSquare);
+                            toggleTurn();
                             break;
                         case BLACK_KING:
                             movePiece(&board.blackKing,selectedSquare,clickedSquare);
+                            toggleTurn();
+                            break;
                         default:
                             break;
                     }
@@ -121,8 +134,20 @@ int main(void){
             else{
 
                 Piece piece=GetPieceAtSquare(clickedSquare);
-                selectedSquare=clickedSquare;
-                selectedPiece=piece;
+
+                if(piece==EMPTY){
+                    continue;
+                }
+                printf("Turn: %d Piece:%d\n",currentTurn,piece);
+
+                if(currentTurn==WHITE_TURN&& isBlackPiece(piece)){
+                    printf("Wrong Colour\n");
+                }else if(currentTurn==BLACK_TURN&& isWhitePiece(piece)){
+                    printf("Wrong Colour\n");
+                }else{
+                    selectedSquare=clickedSquare;
+                    selectedPiece=piece;
+                }
                 if(piece==WHITE_PAWN){
                     generateWhitePawnMoves(selectedSquare);
                 }else if(piece==BLACK_PAWN){
@@ -236,5 +261,13 @@ void DrawBoardPieces(void){
                 DrawPiece(piece,row,col);
             }
         }
+    }
+}
+
+void toggleTurn(void){
+    if(currentTurn==WHITE_TURN){
+        currentTurn=BLACK_TURN;
+    }else{
+        currentTurn=WHITE_TURN;
     }
 }

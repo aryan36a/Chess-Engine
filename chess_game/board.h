@@ -24,6 +24,11 @@ typedef enum{
     BLACK_KING
 }Piece;
 
+typedef enum{
+    WHITE_TURN,
+    BLACK_TURN
+} Turn;
+
 //Board Structure
 typedef struct
 {
@@ -60,6 +65,7 @@ extern Move moves[32];
 
 extern int moveCount;
 extern int selectedSquare;
+extern Turn currentTurn;
 
 extern Piece selectedPiece;
 
@@ -71,6 +77,10 @@ bool isBitSet(uint64_t bitboard,int square);
 Piece GetPieceAtSquare(int square);
 
 bool isLegalMove(int square);
+
+bool isWhitePiece(Piece piece);
+
+bool isBlackPiece(Piece piece);
 
 //Piece Move Generation
 void generateWhitePawnMoves(int square);

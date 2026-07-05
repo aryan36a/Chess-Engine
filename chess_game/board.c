@@ -8,6 +8,15 @@ int moveCount=0;
 int selectedSquare=-1;
 Piece selectedPiece=EMPTY;
 
+Turn currentTurn=WHITE_TURN;
+
+bool isWhitePiece(Piece piece){
+    return piece>=WHITE_PAWN && piece<=WHITE_KING;
+}
+bool isBlackPiece(Piece piece){
+    return piece>=BLACK_PAWN && piece<=BLACK_KING;
+}
+
 void initBoard(void)
 
 {
@@ -301,7 +310,7 @@ void generateKnightMoves(int square){
         int newRow=row+kinghtRowOffset[i];
         int newCol=col+knightColOffset[i];
 
-        if(newCol<0||newRow>7||newCol<0||newCol>7){
+        if(newRow<0||newRow>7||newCol<0||newCol>7){
             continue;
         }
         int destination=newRow*8+newCol;
