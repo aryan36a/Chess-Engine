@@ -120,4 +120,8 @@ void performCastle(int from,int to);
 //Capture
 void removePiece(int square);
 
+//Check Detection
+bool isSquareAttached(int square,bool byWhite);
+bool isKingInCheck(bool white);
+
 #endif

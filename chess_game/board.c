@@ -1,4 +1,5 @@
 #include "board.h"
+#include "attacks.h"
 
 Board board;
 
@@ -613,5 +614,49 @@ void removePiece(int square){
     }
     if(square==7){
         board.blackKingsideRookMoved=true;
+    }
+}
+
+//Attack Checker
+bool isSquareAttacked(int square, bool byWhite){
+    if(pawnAttacks(square,byWhite)){
+        return true;
+    }
+    if(knightAttacks(square,byWhite)){
+        return true;
+    }
+    if(bishopAttacks(square,byWhite)){
+        return true;
+    }
+    if(rookAttacks(square,byWhite)){
+        return true;
+    }
+    if(kingAttacks(square,byWhite)){
+        return true;
+    }
+    return false;
+}
+
+bool isKingInCheck(bool white){
+    //printf("Checking white king...\n");
+    int kingSquare=-1;
+    if(white){
+        for(int i=0;i<64;i++){
+            if(isBitSet(board.whiteKing,i)){
+                //printf("White king square: %d\n",kingSquare);
+                kingSquare=i;
+                break;
+            }
+        }
+        return isSquareAttacked(kingSquare,false);
+    }else{
+        for(int i=0;i<64;i++){
+            if(isBitSet(board.blackKing,i)){
+                //printf("Black king square: %d\n",kingSquare);
+                kingSquare=i;
+                break;
+            }
+        }
+        return isSquareAttacked(kingSquare,true);
     }
 }

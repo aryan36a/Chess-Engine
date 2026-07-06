@@ -16,6 +16,7 @@ void UnloadPieceTextures(void);
 void DrawPiece(Piece piece,int row,int col);
 void DrawBoardPieces(void);
 void toggleTurn(void);
+void DrawCheckHighlight(void);
 
 int main(void){
 
@@ -81,7 +82,7 @@ int main(void){
                 selected
             );
         }
-
+        DrawCheckHighlight();
         DrawBoardPieces();
         DrawPromotionMenu();
 
@@ -109,4 +110,48 @@ int main(void){
     CloseWindow();
 
     return 0;
+}
+
+void DrawCheckHighlight(void){
+    if(isKingInCheck(true)){
+        int kingSquare=-1;
+        for(int i=0;i<64;i++){
+            if(isBitSet(board.whiteKing,i)){
+                kingSquare=i;
+                break;
+            }
+        }
+        if(kingSquare!=-1){
+            int row=kingSquare/8;
+            int col=kingSquare%8;
+            DrawRectangle(
+                col*TILE_SIZE,
+                row*TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE,
+                (Color){255,0,0,120}
+            );
+        }
+    }
+    if(isKingInCheck(false)){
+        int kingSquare=-1;
+        for(int i=0;i<64;i++){
+            if(isBitSet(board.blackKing,i)){
+                kingSquare=i;
+                break;
+            }
+        }
+        if(kingSquare!=-1){
+
+            int row=kingSquare/8;
+            int col=kingSquare%8;
+            DrawRectangle(
+                col*TILE_SIZE,
+                row*TILE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE,
+                (Color){255,0,0,120}
+            );
+        }
+    }
 }
