@@ -43,7 +43,7 @@ A simple chess engine written in C using Raylib.
 ## Build
 
 ```bash
-gcc *.c -o chess.exe -lraylib -lopengl32 -lgdi32 -lwinmm
+gcc *.c -o chess.exe -lraylib
 ```
 
 ## Run
