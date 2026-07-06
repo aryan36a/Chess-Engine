@@ -62,11 +62,11 @@ Implemented:
 - Move execution
 - Castling
 - Turn management
+- En passant
+- Pawn promotion
 
 Planned:
 
-- En passant
-- Pawn promotion
 - Check detection
 - Checkmate
 - Stalemate
