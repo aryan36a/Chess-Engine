@@ -235,10 +235,10 @@ void HandleMouseInput(Vector2 mouse){
 }
 
 void HandlePromotionClick(Vector2 mouse){
-    Rectangle queenBox={320,200,64,64};
-    Rectangle rookBox={420,200,64,64};
-    Rectangle bishopBox={520,200,64,64};
-    Rectangle knightBox={620,200,64,64};
+    Rectangle queenBox={320,200,128,128};
+    Rectangle rookBox={420,200,128,128};
+    Rectangle bishopBox={520,200,128,128};
+    Rectangle knightBox={620,200,128,128};
 
     if(CheckCollisionPointRec(mouse,queenBox)){
         if(promotionMenu.pawn==WHITE_PAWN){
@@ -276,4 +276,6 @@ void HandlePromotionClick(Vector2 mouse){
     selectedSquare=-1;
     selectedPiece=EMPTY;
     moveCount=0;
+
+
 }
