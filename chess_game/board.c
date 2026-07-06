@@ -10,6 +10,8 @@ Piece selectedPiece=EMPTY;
 
 Turn currentTurn=WHITE_TURN;
 
+PromotionMenu promotionMenu={false,-1,EMPTY};
+
 bool isWhitePiece(Piece piece){
     return piece>=WHITE_PAWN && piece<=WHITE_KING;
 }
@@ -228,7 +230,45 @@ void generateStraightMoves(int square,const int rowDir[],const int colDir[],int 
     }
 }
 
-
+void promotePawn(int square, Piece promotedPiece){
+    switch(promotedPiece){
+        case WHITE_QUEEN:
+            board.whitePawns&=~(1ULL<<square);
+            board.whiteQueens|=(1ULL<<square);
+            break;
+        case WHITE_ROOK:
+            board.whitePawns&=~(1ULL<<square);
+            board.whiteRooks|=(1ULL<<square);
+            break;
+        case WHITE_BISHOP:
+            board.whitePawns&=~(1ULL<<square);
+            board.whiteBishops|=(1ULL<<square);
+            break;
+        case WHITE_KNIGHT:
+            board.whitePawns&=~(1ULL<<square);
+            board.whiteKnights|=(1ULL<<square);
+            break;
+        case BLACK_QUEEN:
+            board.blackPawns&=~(1ULL<<square);
+            board.blackQueens|=(1ULL<<square);
+            break;
+        case BLACK_ROOK:
+            board.blackPawns&=~(1ULL<<square);
+            board.blackRooks|=(1ULL<<square);
+            break;
+        case BLACK_BISHOP:
+            board.blackPawns&=~(1ULL<<square);
+            board.blackBishops|=(1ULL<<square);
+            break;
+        case BLACK_KNIGHT:
+            board.blackPawns&=~(1ULL<<square);
+            board.blackKnights|=(1ULL<<square);
+            break;
+        default:
+            return;
+    }
+    updateOccupancy();
+}
 //White Pawn Moves
 void generateWhitePawnMoves(int square){
     int file=square%8;

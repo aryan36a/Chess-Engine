@@ -13,5 +13,6 @@ extern Texture2D pieceTextures[13];
 void DrawPiece(Piece piece,int row,int col);
 void DrawBoardPieces(void);
 void DrawChessBoard(Vector2 mouse,Color hover);
+void DrawPromotionMenu(void);
 
 #endif

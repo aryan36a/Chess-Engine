@@ -83,6 +83,7 @@ int main(void){
         }
 
         DrawBoardPieces();
+        DrawPromotionMenu();
 
         //Legal Move Indicators
         for(int i=0;i<moveCount;i++){

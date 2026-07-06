@@ -11,6 +11,11 @@ void toggleTurn(void);
 
 void HandleMouseInput(Vector2 mouse){
 
+    if(promotionMenu.active){
+        HandlePromotionClick(mouse);
+        return;
+    }
+
     int sRow=mouse.y/TILE_SIZE;
     int sCol=mouse.x/TILE_SIZE;
 
@@ -37,6 +42,13 @@ void HandleMouseInput(Vector2 mouse){
                     }
 
                     movePiece(&board.whitePawns,selectedSquare,clickedSquare);
+                    if(clickedSquare<8){
+                        promotionMenu.active=true;
+                        promotionMenu.square=clickedSquare;
+                        promotionMenu.pawn=WHITE_PAWN;
+
+                        break;
+                    }
                     toggleTurn();
                     break;
                 case BLACK_PAWN:
@@ -54,6 +66,13 @@ void HandleMouseInput(Vector2 mouse){
                     }
 
                     movePiece(&board.blackPawns,selectedSquare,clickedSquare);
+                    if(clickedSquare>=56){
+                        promotionMenu.active=true;
+                        promotionMenu.square=clickedSquare;
+                        promotionMenu.pawn=BLACK_PAWN;
+
+                        break;
+                    }
                     toggleTurn();
                     break;
 
@@ -213,4 +232,48 @@ void HandleMouseInput(Vector2 mouse){
                 break;
         }
     }
+}
+
+void HandlePromotionClick(Vector2 mouse){
+    Rectangle queenBox={320,200,64,64};
+    Rectangle rookBox={420,200,64,64};
+    Rectangle bishopBox={520,200,64,64};
+    Rectangle knightBox={620,200,64,64};
+
+    if(CheckCollisionPointRec(mouse,queenBox)){
+        if(promotionMenu.pawn==WHITE_PAWN){
+            promotePawn(promotionMenu.square,WHITE_QUEEN);
+        }else{
+            promotePawn(promotionMenu.square,BLACK_QUEEN);
+        }
+    }else if(CheckCollisionPointRec(mouse,rookBox)){
+        if(promotionMenu.pawn==WHITE_PAWN){
+            promotePawn(promotionMenu.square,WHITE_ROOK);
+        }else{
+            promotePawn(promotionMenu.square,BLACK_ROOK);
+        }
+    }else if(CheckCollisionPointRec(mouse,bishopBox)){
+        if(promotionMenu.pawn==WHITE_PAWN){
+            promotePawn(promotionMenu.square,WHITE_BISHOP);
+        }else{
+            promotePawn(promotionMenu.square,BLACK_BISHOP);
+        }
+    }else if(CheckCollisionPointRec(mouse,knightBox)){
+        if(promotionMenu.pawn==WHITE_PAWN){
+            promotePawn(promotionMenu.square,WHITE_KNIGHT);
+        }else{
+            promotePawn(promotionMenu.square,BLACK_KNIGHT);
+        }
+    }
+    else{
+        return;
+    }
+
+    promotionMenu.active=false;
+
+    toggleTurn();
+
+    selectedSquare=-1;
+    selectedPiece=EMPTY;
+    moveCount=0;
 }

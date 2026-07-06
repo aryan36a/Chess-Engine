@@ -5,4 +5,6 @@
 
 void HandleMouseInput(Vector2 mouse);
 
+void HandlePromotionClick(Vector2 mouse);
+
 #endif

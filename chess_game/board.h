@@ -69,6 +69,14 @@ typedef struct{
     int to;
 }Move;
 
+typedef struct{
+    bool active;
+    int square;
+    Piece pawn;
+}PromotionMenu;
+
+extern PromotionMenu promotionMenu;
+
 //Global Variables
 extern Board board;
 
@@ -92,7 +100,11 @@ bool isLegalMove(int square);
 bool isWhitePiece(Piece piece);
 
 bool isBlackPiece(Piece piece);
+
 void toggleTurn(void);
+
+void promotePawn(int square,Piece promotedPiece);
+
 //Piece Move Generation
 void generateWhitePawnMoves(int square);
 void generateBlackPawnMoves(int square);
