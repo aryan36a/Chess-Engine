@@ -122,6 +122,11 @@ void removePiece(int square);
 
 //Check Detection
 bool isSquareAttached(int square,bool byWhite);
+bool isSquareAttacked(int square,bool byWhite);
 bool isKingInCheck(bool white);
+bool leavesKingInCheck(Move move);
+void makeTemporaryMove(Move move, Piece *capturedPiece);
+void undoTemporaryMove(Move move, Piece capturedPiece);
+void filterLegalMoves(void);
 
 #endif

@@ -13,6 +13,8 @@ Turn currentTurn=WHITE_TURN;
 
 PromotionMenu promotionMenu={false,-1,EMPTY};
 
+static Board temporaryBoard;
+
 bool isWhitePiece(Piece piece){
     return piece>=WHITE_PAWN && piece<=WHITE_KING;
 }
@@ -325,6 +327,8 @@ void generateWhitePawnMoves(int square){
         }
 
     }
+
+    filterLegalMoves();
 }
 
 //Black Pawn Moves
@@ -382,6 +386,8 @@ void generateBlackPawnMoves(int square){
         }
 
     }
+
+    filterLegalMoves();
 }
 
 //Knight Moves
@@ -417,18 +423,22 @@ void generateKnightMoves(int square){
     moves[moveCount].to=destination;
     moveCount++;
 }
+
+    filterLegalMoves();
 }
 
 //Rook Moves
 void generateRookMoves(int square){
     moveCount=0;
     generateStraightMoves(square,straightRow,straightCol,4);
+    filterLegalMoves();
 }
 
 //Bishop Moves
 void generateBishopMoves(int square){
     moveCount=0;
     generateStraightMoves(square,diagonalRow,diagonalCol,4);
+    filterLegalMoves();
 }
 
 //Queen Moves
@@ -436,6 +446,7 @@ void generateQueenMoves(int square){
     moveCount=0;
     generateStraightMoves(square,straightRow,straightCol,4);
     generateStraightMoves(square,diagonalRow,diagonalCol,4);
+    filterLegalMoves();
 }
 
 //King Moves
@@ -443,13 +454,13 @@ void generateQueenMoves(int square){
 void generateCastlingMoves(void){
     if(selectedPiece==WHITE_KING){
         if(!board.whiteKingMoved&&!board.whiteKingsideRookMoved&&isBitSet(board.whiteRooks,63)&&!isBitSet(board.occupied,61)
-            &&!isBitSet(board.occupied,62)){
+            &&!isBitSet(board.occupied,62)&&!isSquareAttacked(60,false)&&!isSquareAttacked(61,false)&&!isSquareAttacked(62,false)){
             moves[moveCount].from=60;
             moves[moveCount].to=62;
             moveCount++;
         }
         if(!board.whiteKingMoved&&!board.whiteQueensideRookMoved&&isBitSet(board.whiteRooks,56)&&!isBitSet(board.occupied,57)
-            &&!isBitSet(board.occupied,58)&&!isBitSet(board.occupied,59)){
+            &&!isBitSet(board.occupied,58)&&!isBitSet(board.occupied,59)&&!isSquareAttacked(60,false)&&!isSquareAttacked(59,false)&&!isSquareAttacked(58,false)){
             moves[moveCount].from=60;
             moves[moveCount].to=58;
             moveCount++;
@@ -457,14 +468,14 @@ void generateCastlingMoves(void){
     }
     
     if(selectedPiece==BLACK_KING){
-        if(!board.blackKingMoved&&!board.blackKingsideRookMoved&&isBitSet(board.blackRooks,7)&&!isBitSet(!board.occupied,5)
-            &&!isBitSet(board.occupied,6)){
+        if(!board.blackKingMoved&&!board.blackKingsideRookMoved&&isBitSet(board.blackRooks,7)&&!isBitSet(board.occupied,5)
+            &&!isBitSet(board.occupied,6)&&!isSquareAttacked(4,true)&&!isSquareAttacked(5,true)&&!isSquareAttacked(6,true)){
             moves[moveCount].from=4;
             moves[moveCount].to=6;
             moveCount++;
         }
         if(!board.blackKingMoved&&!board.blackQueensideRookMoved&&isBitSet(board.blackRooks,0)&&!isBitSet(board.occupied,1)
-            &&!isBitSet(board.occupied,2)&&!isBitSet(board.occupied,3)){
+            &&!isBitSet(board.occupied,2)&&!isBitSet(board.occupied,3)&&!isSquareAttacked(4,true)&&!isSquareAttacked(3,true)&&!isSquareAttacked(2,true)){
             moves[moveCount].from=4;
             moves[moveCount].to=2;
             moveCount++;
@@ -506,6 +517,8 @@ void generateKingMoves(int square){
         moveCount++;
     }
     generateCastlingMoves();
+
+    filterLegalMoves();
 }
 
 //============================================================================
@@ -540,6 +553,143 @@ void performCastle(int from,int to){
         }
     }
     updateOccupancy();
+}
+
+void makeTemporaryMove(Move move, Piece *capturedPiece){
+    Piece movingPiece=GetPieceAtSquare(move.from);
+
+    temporaryBoard=board;
+
+    if(capturedPiece!=NULL){
+        *capturedPiece=EMPTY;
+    }
+
+    switch(movingPiece){
+        case WHITE_PAWN:
+            if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
+                if(capturedPiece!=NULL){
+                    *capturedPiece=GetPieceAtSquare(move.to+8);
+                }
+                removePiece(move.to+8);
+            }else{
+                if(capturedPiece!=NULL){
+                    *capturedPiece=GetPieceAtSquare(move.to);
+                }
+            }
+            movePiece(&board.whitePawns,move.from,move.to);
+            break;
+        case BLACK_PAWN:
+            if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
+                if(capturedPiece!=NULL){
+                    *capturedPiece=GetPieceAtSquare(move.to-8);
+                }
+                removePiece(move.to-8);
+            }else{
+                if(capturedPiece!=NULL){
+                    *capturedPiece=GetPieceAtSquare(move.to);
+                }
+            }
+            movePiece(&board.blackPawns,move.from,move.to);
+            break;
+        case WHITE_KNIGHT:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.whiteKnights,move.from,move.to);
+            break;
+        case BLACK_KNIGHT:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.blackKnights,move.from,move.to);
+            break;
+        case WHITE_ROOK:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.whiteRooks,move.from,move.to);
+            break;
+        case BLACK_ROOK:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.blackRooks,move.from,move.to);
+            break;
+        case WHITE_BISHOP:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.whiteBishops,move.from,move.to);
+            break;
+        case BLACK_BISHOP:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.blackBishops,move.from,move.to);
+            break;
+        case WHITE_QUEEN:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.whiteQueens,move.from,move.to);
+            break;
+        case BLACK_QUEEN:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.blackQueens,move.from,move.to);
+            break;
+        case WHITE_KING:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.whiteKing,move.from,move.to);
+            performCastle(move.from,move.to);
+            break;
+        case BLACK_KING:
+            if(capturedPiece!=NULL){
+                *capturedPiece=GetPieceAtSquare(move.to);
+            }
+            movePiece(&board.blackKing,move.from,move.to);
+            performCastle(move.from,move.to);
+            break;
+        default:
+            break;
+    }
+}
+
+void undoTemporaryMove(Move move, Piece capturedPiece){
+    (void)move;
+    (void)capturedPiece;
+    board=temporaryBoard;
+}
+
+bool leavesKingInCheck(Move move){
+    Piece capturedPiece=EMPTY;
+    bool white=isWhitePiece(GetPieceAtSquare(move.from));
+
+    makeTemporaryMove(move,&capturedPiece);
+
+    if(isKingInCheck(white)){
+        undoTemporaryMove(move,capturedPiece);
+        return true;
+    }
+
+    undoTemporaryMove(move,capturedPiece);
+    return false;
+}
+
+void filterLegalMoves(void){
+    int legalCount=0;
+
+    for(int i=0;i<moveCount;i++){
+        if(!leavesKingInCheck(moves[i])){
+            moves[legalCount]=moves[i];
+            legalCount++;
+        }
+    }
+
+    moveCount=legalCount;
 }
 
 //Capture Pieces
