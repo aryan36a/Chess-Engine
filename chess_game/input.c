@@ -8,6 +8,7 @@
 
 void toggleTurn(void);
 
+
 void HandleMouseInput(Vector2 mouse){
 
     int sRow=mouse.y/TILE_SIZE;
@@ -22,26 +23,54 @@ void HandleMouseInput(Vector2 mouse){
             switch(selectedPiece){
 
                 case WHITE_PAWN:
+
+                    //Move Piece after enpassant (sp case)
+                    if(clickedSquare==board.enPassantSquare&&selectedSquare%8!=clickedSquare%8){
+                        removePiece(clickedSquare+8);
+                    }
+
+                    //Set enpassant
+                    if(selectedSquare-clickedSquare==16){
+                        board.enPassantSquare=(selectedSquare+clickedSquare)/2;
+                    }else{
+                        board.enPassantSquare=-1;
+                    }
+
                     movePiece(&board.whitePawns,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
-
                 case BLACK_PAWN:
+
+                    //Move Piece after wnpassant(special case)
+                    if(clickedSquare==board.enPassantSquare&&selectedSquare%8!=clickedSquare%8){
+                        removePiece(clickedSquare-8);
+                    }
+
+                    //Set enpassant
+                    if(clickedSquare-selectedSquare==16){
+                        board.enPassantSquare=(selectedSquare+clickedSquare)/2;
+                    }else{
+                        board.enPassantSquare=-1;
+                    }
+
                     movePiece(&board.blackPawns,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case WHITE_KNIGHT:
+                    board.enPassantSquare=-1;
                     movePiece(&board.whiteKnights,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case BLACK_KNIGHT:
+                    board.enPassantSquare=-1;
                     movePiece(&board.blackKnights,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case WHITE_ROOK:
+                    board.enPassantSquare=-1;
                     movePiece(&board.whiteRooks,selectedSquare,clickedSquare);
 
                     if(selectedSquare==56){
@@ -54,6 +83,7 @@ void HandleMouseInput(Vector2 mouse){
                     break;
 
                 case BLACK_ROOK:
+                    board.enPassantSquare=-1;
                     movePiece(&board.blackRooks,selectedSquare,clickedSquare);
 
                     if(selectedSquare==0){
@@ -66,26 +96,31 @@ void HandleMouseInput(Vector2 mouse){
                     break;
 
                 case WHITE_BISHOP:
+                    board.enPassantSquare=-1;
                     movePiece(&board.whiteBishops,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case BLACK_BISHOP:
+                    board.enPassantSquare=-1;
                     movePiece(&board.blackBishops,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case WHITE_QUEEN:
+                    board.enPassantSquare=-1;
                     movePiece(&board.whiteQueens,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case BLACK_QUEEN:
+                    board.enPassantSquare=-1;
                     movePiece(&board.blackQueens,selectedSquare,clickedSquare);
                     toggleTurn();
                     break;
 
                 case WHITE_KING:
+                    board.enPassantSquare=-1;
                     movePiece(&board.whiteKing,selectedSquare,clickedSquare);
                     performCastle(selectedSquare,clickedSquare);
                     board.whiteKingMoved=true;
@@ -93,6 +128,7 @@ void HandleMouseInput(Vector2 mouse){
                     break;
 
                 case BLACK_KING:
+                    board.enPassantSquare=-1;
                     movePiece(&board.blackKing,selectedSquare,clickedSquare);
                     performCastle(selectedSquare,clickedSquare);
                     board.blackKingMoved=true;

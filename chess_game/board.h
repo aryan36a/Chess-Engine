@@ -58,6 +58,8 @@ typedef struct
 
     bool blackKingsideRookMoved;
     bool blackQueensideRookMoved;
+    
+    int enPassantSquare;
 
 }Board;
 

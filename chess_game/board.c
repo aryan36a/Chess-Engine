@@ -44,6 +44,8 @@ void initBoard(void)
     board.blackKingsideRookMoved = false;
     board.blackQueensideRookMoved = false;
 
+    board.enPassantSquare=-1;
+
     //White Pieces
 
     //Pawns(a2-h2)
@@ -251,6 +253,20 @@ void generateWhitePawnMoves(int square){
             moveCount++;
         }
     }
+
+    if(board.enPassantSquare!=-1){
+        if(square-9==board.enPassantSquare){
+            moves[moveCount].from=square;
+            moves[moveCount].to=board.enPassantSquare;
+            moveCount++;
+        }
+        if(square-7==board.enPassantSquare){
+            moves[moveCount].from=square;
+            moves[moveCount].to=board.enPassantSquare;
+            moveCount++;
+        }
+    }
+
     int oneStep=square-8;
     if(oneStep >=0 && !isBitSet(board.occupied,oneStep)){
         moves[moveCount].from=square;
@@ -294,6 +310,20 @@ void generateBlackPawnMoves(int square){
             moveCount++;
         }
     }
+
+    if(board.enPassantSquare!=-1){
+        if(square+9==board.enPassantSquare){
+            moves[moveCount].from=square;
+            moves[moveCount].to=board.enPassantSquare;
+            moveCount++;
+        }
+        if(square+7==board.enPassantSquare){
+            moves[moveCount].from=square;
+            moves[moveCount].to=board.enPassantSquare;
+            moveCount++;
+        }
+    }
+
     int oneStep=square+8;
     if(oneStep >=0 && !isBitSet(board.occupied,oneStep)){
         moves[moveCount].from=square;
