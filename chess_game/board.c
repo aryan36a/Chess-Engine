@@ -558,12 +558,12 @@ void performCastle(int from,int to){
 void makeMove(Move move){
 
     Piece movingPiece = GetPieceAtSquare(move.from);
-
-    switch(movingPiece){
-
-        if(movingPiece!=WHITE_PAWN&&movingPiece!=BLACK_PAWN){
+    
+    if(movingPiece!=WHITE_PAWN&&movingPiece!=BLACK_PAWN){
             board.enPassantSquare=-1;
-        }
+    }
+    
+    switch(movingPiece){
 
         case WHITE_PAWN:
             if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
