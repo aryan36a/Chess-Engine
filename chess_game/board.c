@@ -493,13 +493,10 @@ void generateKingMoves(int square){
     int col=square%8;
     
     uint64_t friendlyPieces;
-    uint64_t enemyPieces;
     if(selectedPiece<=WHITE_KING){
         friendlyPieces=board.whitePieces;
-        enemyPieces=board.blackPieces;
     }else{
         friendlyPieces=board.blackPieces;
-        enemyPieces=board.whitePieces;
     }
     for(int dir=0;dir<8;dir++){
         int newRow=row+rowDir[dir];

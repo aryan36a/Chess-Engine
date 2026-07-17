@@ -1,2 +1,4 @@
 .vscode/
 chess.exe
+tests/
+*.o
