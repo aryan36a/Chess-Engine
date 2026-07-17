@@ -561,6 +561,10 @@ void makeMove(Move move){
 
     switch(movingPiece){
 
+        if(movingPiece!=WHITE_PAWN&&movingPiece!=BLACK_PAWN){
+            board.enPassantSquare=-1;
+        }
+
         case WHITE_PAWN:
             if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
                 removePiece(move.to+8);
@@ -590,27 +594,23 @@ void makeMove(Move move){
             break;
 
         case WHITE_KNIGHT:
-            board.enPassantSquare=-1;
             movePiece(&board.whiteKnights, move.from, move.to);
             break;
 
         case BLACK_KNIGHT:
-            board.enPassantSquare=-1;
             movePiece(&board.blackKnights, move.from, move.to);
             break;
 
         case WHITE_BISHOP:
-            board.enPassantSquare=-1;
             movePiece(&board.whiteBishops, move.from, move.to);
             break;
 
         case BLACK_BISHOP:
-            board.enPassantSquare=-1;
             movePiece(&board.blackBishops, move.from, move.to);
             break;
 
         case WHITE_ROOK:
-            board.enPassantSquare=-1;
+        
             movePiece(&board.whiteRooks, move.from, move.to);
 
             if(move.from==56){
@@ -621,7 +621,6 @@ void makeMove(Move move){
             break;
 
         case BLACK_ROOK:
-            board.enPassantSquare=-1;
             movePiece(&board.blackRooks, move.from, move.to);
 
             if(move.from==0){
@@ -632,24 +631,20 @@ void makeMove(Move move){
             break;
 
         case WHITE_QUEEN:
-            board.enPassantSquare=-1;
             movePiece(&board.whiteQueens, move.from, move.to);
             break;
 
         case BLACK_QUEEN:
-            board.enPassantSquare=-1;
             movePiece(&board.blackQueens, move.from, move.to);
             break;
 
         case WHITE_KING:
-            board.enPassantSquare=-1;
             movePiece(&board.whiteKing, move.from, move.to);
             performCastle(move.from, move.to);
             board.whiteKingMoved=true;
             break;
 
         case BLACK_KING:
-            board.enPassantSquare=-1;
             movePiece(&board.blackKing, move.from, move.to);
             performCastle(move.from, move.to);
             board.blackKingMoved=true;
@@ -757,7 +752,7 @@ void removePiece(int square){
 
     //Update Occupancy Bitboards
     updateOccupancy();
-    
+
     if(square==56){
         board.whiteQueensideRookMoved=true;
     }
