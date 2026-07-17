@@ -88,6 +88,10 @@ extern Turn currentTurn;
 
 extern Piece selectedPiece;
 
+bool hasLegalMoves(bool white);
+bool isCheckMate(bool white);
+bool isStaleMate(bool white);
+
 //Board Functions
 void initBoard(void);
 
@@ -115,6 +119,8 @@ void generateRookMoves(int square);
 void generateBishopMoves(int square);
 void generateQueenMoves(int square);
 void generateKingMoves(int square);
+//Master Generator
+void generateMoves(int square);
 
 //Piece Movement
 void movePiece(uint64_t *bitboard,int from,int to);

@@ -810,3 +810,82 @@ bool isKingInCheck(bool white){
         return isSquareAttacked(kingSquare,true);
     }
 }
+
+//Legal Moves
+void generateMoves(int square){
+    Piece piece = GetPieceAtSquare(square);
+
+    selectedPiece = piece;
+
+    switch(piece){
+
+        case WHITE_PAWN:
+            generateWhitePawnMoves(square);
+            break;
+
+        case BLACK_PAWN:
+            generateBlackPawnMoves(square);
+            break;
+
+        case WHITE_KNIGHT:
+        case BLACK_KNIGHT:
+            generateKnightMoves(square);
+            break;
+
+        case WHITE_BISHOP:
+        case BLACK_BISHOP:
+            generateBishopMoves(square);
+            break;
+
+        case WHITE_ROOK:
+        case BLACK_ROOK:
+            generateRookMoves(square);
+            break;
+
+        case WHITE_QUEEN:
+        case BLACK_QUEEN:
+            generateQueenMoves(square);
+            break;
+
+        case WHITE_KING:
+        case BLACK_KING:
+            generateKingMoves(square);
+            break;
+
+        default:
+            moveCount = 0;
+    }
+}
+
+bool hasLegalMoves(bool white){
+    Piece oldSelected=selectedPiece;
+
+    for(int square=0;square<64;square++){
+        Piece piece=GetPieceAtSquare(square);
+
+        if(piece==EMPTY){
+            continue;
+        }
+
+        if(white !=isWhitePiece(piece)){
+            continue;
+        }
+        generateMoves(square);
+
+        if(moveCount>0){
+            selectedPiece=oldSelected;
+            return true;
+        }
+    }
+    selectedPiece=oldSelected;
+    return false;
+}
+
+//CheckMate
+bool isCheckMate(bool white){
+    return isKingInCheck(white) && !hasLegalMoves(white);
+}
+//StaleMate
+bool isStaleMate(bool white){
+    return !isKingInCheck(white) && !hasLegalMoves(white);
+}

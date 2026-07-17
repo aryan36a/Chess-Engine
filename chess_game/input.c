@@ -7,6 +7,7 @@
 #define TILE_SIZE 128
 
 void toggleTurn(void);
+void detectCheckAndStaleMate(void);
 
 
 void HandleMouseInput(Vector2 mouse){
@@ -38,6 +39,7 @@ void HandleMouseInput(Vector2 mouse){
                 promotionMenu.pawn=BLACK_PAWN;
             }else{
                 toggleTurn();
+                detectCheckAndStaleMate();
             }
         }
 
@@ -74,45 +76,7 @@ void HandleMouseInput(Vector2 mouse){
 
         selectedSquare=clickedSquare;
         selectedPiece=piece;
-
-        switch(piece){
-
-            case WHITE_PAWN:
-                generateWhitePawnMoves(selectedSquare);
-                break;
-
-            case BLACK_PAWN:
-                generateBlackPawnMoves(selectedSquare);
-                break;
-
-            case WHITE_KNIGHT:
-            case BLACK_KNIGHT:
-                generateKnightMoves(selectedSquare);
-                break;
-
-            case WHITE_ROOK:
-            case BLACK_ROOK:
-                generateRookMoves(selectedSquare);
-                break;
-
-            case WHITE_BISHOP:
-            case BLACK_BISHOP:
-                generateBishopMoves(selectedSquare);
-                break;
-
-            case WHITE_QUEEN:
-            case BLACK_QUEEN:
-                generateQueenMoves(selectedSquare);
-                break;
-
-            case WHITE_KING:
-            case BLACK_KING:
-                generateKingMoves(selectedSquare);
-                break;
-
-            default:
-                break;
-        }
+        generateMoves(selectedSquare);
     }
 }
 
@@ -154,10 +118,23 @@ void HandlePromotionClick(Vector2 mouse){
     promotionMenu.active=false;
 
     toggleTurn();
+    detectCheckAndStaleMate();
 
     selectedSquare=-1;
     selectedPiece=EMPTY;
     moveCount=0;
 
 
+}
+
+void detectCheckAndStaleMate(void){
+
+    bool white=(currentTurn==WHITE_TURN);
+
+    if(isCheckMate(white)){
+        printf("Checkmate!\n");
+    }
+    else if(isStaleMate(white)){
+        printf("Stalemate!\n");
+    }
 }
