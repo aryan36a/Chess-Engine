@@ -272,6 +272,7 @@ void promotePawn(int square, Piece promotedPiece){
     }
     updateOccupancy();
 }
+
 //White Pawn Moves
 void generateWhitePawnMoves(int square){
     int file=square%8;
@@ -523,8 +524,7 @@ void generateKingMoves(int square){
 
 //============================================================================
 //Move Pieces
-void movePiece(uint64_t *bitboard, int from, int to)
-{
+void movePiece(uint64_t *bitboard, int from, int to){
     removePiece(to);
 
     *bitboard &= ~(1ULL << from);
@@ -555,107 +555,129 @@ void performCastle(int from,int to){
     updateOccupancy();
 }
 
+void makeMove(Move move){
+
+    Piece movingPiece = GetPieceAtSquare(move.from);
+
+    switch(movingPiece){
+
+        case WHITE_PAWN:
+            if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
+                removePiece(move.to+8);
+            }
+
+            if(move.from-move.to==16){
+                board.enPassantSquare=(move.from+move.to)/2;
+            }else{
+                board.enPassantSquare=-1;
+            }
+
+            movePiece(&board.whitePawns, move.from, move.to);
+            break;
+
+        case BLACK_PAWN:
+            if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
+                removePiece(move.to-8);
+            }
+
+            if(move.to-move.from==16){
+                board.enPassantSquare=(move.from+move.to)/2;
+            }else{
+                board.enPassantSquare=-1;
+            }
+
+            movePiece(&board.blackPawns, move.from, move.to);
+            break;
+
+        case WHITE_KNIGHT:
+            board.enPassantSquare=-1;
+            movePiece(&board.whiteKnights, move.from, move.to);
+            break;
+
+        case BLACK_KNIGHT:
+            board.enPassantSquare=-1;
+            movePiece(&board.blackKnights, move.from, move.to);
+            break;
+
+        case WHITE_BISHOP:
+            board.enPassantSquare=-1;
+            movePiece(&board.whiteBishops, move.from, move.to);
+            break;
+
+        case BLACK_BISHOP:
+            board.enPassantSquare=-1;
+            movePiece(&board.blackBishops, move.from, move.to);
+            break;
+
+        case WHITE_ROOK:
+            board.enPassantSquare=-1;
+            movePiece(&board.whiteRooks, move.from, move.to);
+
+            if(move.from==56){
+                board.whiteQueensideRookMoved=true;
+            }else if(move.from==63){
+                board.whiteKingsideRookMoved=true;
+            }
+            break;
+
+        case BLACK_ROOK:
+            board.enPassantSquare=-1;
+            movePiece(&board.blackRooks, move.from, move.to);
+
+            if(move.from==0){
+                board.blackQueensideRookMoved=true;
+            }else if(move.from==7){
+                board.blackKingsideRookMoved=true;
+            }
+            break;
+
+        case WHITE_QUEEN:
+            board.enPassantSquare=-1;
+            movePiece(&board.whiteQueens, move.from, move.to);
+            break;
+
+        case BLACK_QUEEN:
+            board.enPassantSquare=-1;
+            movePiece(&board.blackQueens, move.from, move.to);
+            break;
+
+        case WHITE_KING:
+            board.enPassantSquare=-1;
+            movePiece(&board.whiteKing, move.from, move.to);
+            performCastle(move.from, move.to);
+            board.whiteKingMoved=true;
+            break;
+
+        case BLACK_KING:
+            board.enPassantSquare=-1;
+            movePiece(&board.blackKing, move.from, move.to);
+            performCastle(move.from, move.to);
+            board.blackKingMoved=true;
+            break;
+
+        default:
+            break;
+    }
+}
+
 void makeTemporaryMove(Move move, Piece *capturedPiece){
     Piece movingPiece=GetPieceAtSquare(move.from);
 
     temporaryBoard=board;
 
     if(capturedPiece!=NULL){
-        *capturedPiece=EMPTY;
+        if((movingPiece==WHITE_PAWN||movingPiece==BLACK_PAWN)&&move.to==board.enPassantSquare&&move.from%8!=move.to%8){
+            if(movingPiece==WHITE_PAWN){
+                *capturedPiece=GetPieceAtSquare(move.to+8);
+            }else{
+                *capturedPiece=GetPieceAtSquare(move.to-8);
+            }
+        }else{
+            *capturedPiece=GetPieceAtSquare(move.to);
+        }
     }
 
-    switch(movingPiece){
-        case WHITE_PAWN:
-            if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
-                if(capturedPiece!=NULL){
-                    *capturedPiece=GetPieceAtSquare(move.to+8);
-                }
-                removePiece(move.to+8);
-            }else{
-                if(capturedPiece!=NULL){
-                    *capturedPiece=GetPieceAtSquare(move.to);
-                }
-            }
-            movePiece(&board.whitePawns,move.from,move.to);
-            break;
-        case BLACK_PAWN:
-            if(move.to==board.enPassantSquare&&move.from%8!=move.to%8){
-                if(capturedPiece!=NULL){
-                    *capturedPiece=GetPieceAtSquare(move.to-8);
-                }
-                removePiece(move.to-8);
-            }else{
-                if(capturedPiece!=NULL){
-                    *capturedPiece=GetPieceAtSquare(move.to);
-                }
-            }
-            movePiece(&board.blackPawns,move.from,move.to);
-            break;
-        case WHITE_KNIGHT:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.whiteKnights,move.from,move.to);
-            break;
-        case BLACK_KNIGHT:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.blackKnights,move.from,move.to);
-            break;
-        case WHITE_ROOK:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.whiteRooks,move.from,move.to);
-            break;
-        case BLACK_ROOK:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.blackRooks,move.from,move.to);
-            break;
-        case WHITE_BISHOP:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.whiteBishops,move.from,move.to);
-            break;
-        case BLACK_BISHOP:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.blackBishops,move.from,move.to);
-            break;
-        case WHITE_QUEEN:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.whiteQueens,move.from,move.to);
-            break;
-        case BLACK_QUEEN:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.blackQueens,move.from,move.to);
-            break;
-        case WHITE_KING:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.whiteKing,move.from,move.to);
-            performCastle(move.from,move.to);
-            break;
-        case BLACK_KING:
-            if(capturedPiece!=NULL){
-                *capturedPiece=GetPieceAtSquare(move.to);
-            }
-            movePiece(&board.blackKing,move.from,move.to);
-            performCastle(move.from,move.to);
-            break;
-        default:
-            break;
-    }
+    makeMove(move);
 }
 
 void undoTemporaryMove(Move move, Piece capturedPiece){
@@ -734,25 +756,8 @@ void removePiece(int square){
         board.blackKing &= ~(1ULL<<square);
 
     //Update Occupancy Bitboards
-    board.whitePieces =
-        board.whitePawns   |
-        board.whiteKnights |
-        board.whiteBishops |
-        board.whiteRooks   |
-        board.whiteQueens  |
-        board.whiteKing;
-
-    board.blackPieces =
-        board.blackPawns   |
-        board.blackKnights |
-        board.blackBishops |
-        board.blackRooks   |
-        board.blackQueens  |
-        board.blackKing;
-
-    board.occupied =
-        board.whitePieces |
-        board.blackPieces;
+    updateOccupancy();
+    
     if(square==56){
         board.whiteQueensideRookMoved=true;
     }

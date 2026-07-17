@@ -25,137 +25,19 @@ void HandleMouseInput(Vector2 mouse){
 
         if(isLegalMove(clickedSquare)){
 
-            switch(selectedPiece){
+            Move move={selectedSquare,clickedSquare};
+            makeMove(move);
 
-                case WHITE_PAWN:
-
-                    //Move Piece after enpassant (sp case)
-                    if(clickedSquare==board.enPassantSquare&&selectedSquare%8!=clickedSquare%8){
-                        removePiece(clickedSquare+8);
-                    }
-
-                    //Set enpassant
-                    if(selectedSquare-clickedSquare==16){
-                        board.enPassantSquare=(selectedSquare+clickedSquare)/2;
-                    }else{
-                        board.enPassantSquare=-1;
-                    }
-
-                    movePiece(&board.whitePawns,selectedSquare,clickedSquare);
-                    if(clickedSquare<8){
-                        promotionMenu.active=true;
-                        promotionMenu.square=clickedSquare;
-                        promotionMenu.pawn=WHITE_PAWN;
-
-                        break;
-                    }
-                    toggleTurn();
-                    break;
-                case BLACK_PAWN:
-
-                    //Move Piece after wnpassant(special case)
-                    if(clickedSquare==board.enPassantSquare&&selectedSquare%8!=clickedSquare%8){
-                        removePiece(clickedSquare-8);
-                    }
-
-                    //Set enpassant
-                    if(clickedSquare-selectedSquare==16){
-                        board.enPassantSquare=(selectedSquare+clickedSquare)/2;
-                    }else{
-                        board.enPassantSquare=-1;
-                    }
-
-                    movePiece(&board.blackPawns,selectedSquare,clickedSquare);
-                    if(clickedSquare>=56){
-                        promotionMenu.active=true;
-                        promotionMenu.square=clickedSquare;
-                        promotionMenu.pawn=BLACK_PAWN;
-
-                        break;
-                    }
-                    toggleTurn();
-                    break;
-
-                case WHITE_KNIGHT:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.whiteKnights,selectedSquare,clickedSquare);
-                    toggleTurn();
-                    break;
-
-                case BLACK_KNIGHT:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.blackKnights,selectedSquare,clickedSquare);
-                    toggleTurn();
-                    break;
-
-                case WHITE_ROOK:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.whiteRooks,selectedSquare,clickedSquare);
-
-                    if(selectedSquare==56){
-                        board.whiteQueensideRookMoved=true;
-                    }else if(selectedSquare==63){
-                        board.whiteKingsideRookMoved=true;
-                    }
-
-                    toggleTurn();
-                    break;
-
-                case BLACK_ROOK:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.blackRooks,selectedSquare,clickedSquare);
-
-                    if(selectedSquare==0){
-                        board.blackQueensideRookMoved=true;
-                    }else if(selectedSquare==7){
-                        board.blackKingsideRookMoved=true;
-                    }
-
-                    toggleTurn();
-                    break;
-
-                case WHITE_BISHOP:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.whiteBishops,selectedSquare,clickedSquare);
-                    toggleTurn();
-                    break;
-
-                case BLACK_BISHOP:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.blackBishops,selectedSquare,clickedSquare);
-                    toggleTurn();
-                    break;
-
-                case WHITE_QUEEN:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.whiteQueens,selectedSquare,clickedSquare);
-                    toggleTurn();
-                    break;
-
-                case BLACK_QUEEN:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.blackQueens,selectedSquare,clickedSquare);
-                    toggleTurn();
-                    break;
-
-                case WHITE_KING:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.whiteKing,selectedSquare,clickedSquare);
-                    performCastle(selectedSquare,clickedSquare);
-                    board.whiteKingMoved=true;
-                    toggleTurn();
-                    break;
-
-                case BLACK_KING:
-                    board.enPassantSquare=-1;
-                    movePiece(&board.blackKing,selectedSquare,clickedSquare);
-                    performCastle(selectedSquare,clickedSquare);
-                    board.blackKingMoved=true;
-                    toggleTurn();
-                    break;
-
-                default:
-                    break;
+            if(selectedPiece==WHITE_PAWN&&clickedSquare<8){
+                promotionMenu.active=true;
+                promotionMenu.square=clickedSquare;
+                promotionMenu.pawn=WHITE_PAWN;
+            }else if(selectedPiece==BLACK_PAWN&&clickedSquare>=56){
+                promotionMenu.active=true;
+                promotionMenu.square=clickedSquare;
+                promotionMenu.pawn=BLACK_PAWN;
+            }else{
+                toggleTurn();
             }
         }
 

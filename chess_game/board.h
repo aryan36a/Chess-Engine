@@ -105,6 +105,8 @@ void toggleTurn(void);
 
 void promotePawn(int square,Piece promotedPiece);
 
+void makeMove(Move move);
+
 //Piece Move Generation
 void generateWhitePawnMoves(int square);
 void generateBlackPawnMoves(int square);
@@ -121,7 +123,6 @@ void performCastle(int from,int to);
 void removePiece(int square);
 
 //Check Detection
-bool isSquareAttached(int square,bool byWhite);
 bool isSquareAttacked(int square,bool byWhite);
 bool isKingInCheck(bool white);
 bool leavesKingInCheck(Move move);
