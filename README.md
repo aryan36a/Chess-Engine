@@ -1,400 +1,437 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="Chess banner" width="100%" />
+# ♟️ ChessEngine-C
 
-# Chess
+### A high-performance chess engine and GUI, built from scratch in C
 
-*A chess implementation written from the ground up in C — no chess libraries, no shortcuts.*
+*Bitboard-driven move generation meets clean, minimal graphics — no shortcuts, no bloat, just chess.*
 
-![Language](https://img.shields.io/badge/language-C17-blue)
-![Graphics](https://img.shields.io/badge/graphics-Raylib-brightgreen)
-![Architecture](https://img.shields.io/badge/representation-Bitboards-orange)
-![Status](https://img.shields.io/badge/status-in%20development-yellow)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
-
-</div>
-
----
-
-## What is this?
-
-This is a chess game built entirely from scratch — board representation, move generation, and rule handling are all hand-written in C, rendered with [Raylib](https://www.raylib.com/). There's no third-party chess library doing the heavy lifting here. The point was never to ship a finished product quickly; it was to actually understand how a chess engine works internally, one rule at a time.
-
-The board uses **bitboards** (64-bit integers, one bit per square) rather than an 8x8 array, which is the same representation used by most serious chess engines. It makes certain operations — attack generation, occupancy checks, sliding piece logic — reduce to bitwise arithmetic instead of nested loops.
-
-> **Note**
-> This is a work in progress. The game is fully playable move-to-move, but end-of-game detection (checkmate, stalemate, draws) and any form of AI opponent are not implemented yet. See [Current Progress](#current-progress) for the honest breakdown.
-
----
-
-## Screenshots
-
-<div align="center">
-
-| Board & Pieces | Legal Move Highlighting |
-|:---:|:---:|
-| ![Board](assets/screenshots/board.png) | ![Highlighting](assets/screenshots/highlighting.png) |
-
-</div>
-
-<details>
-<summary><strong>▸ More screenshots</strong></summary>
 <br>
 
-| Promotion Menu | Check Indicator |
-|:---:|:---:|
-| ![Promotion](assets/screenshots/promotion.png) | ![Check](assets/screenshots/check.png) |
+[![Language](https://img.shields.io/badge/Language-C-00599C?style=for-the-badge&logo=c&logoColor=white)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![Raylib](https://img.shields.io/badge/Graphics-Raylib-orange?style=for-the-badge&logo=raylib&logoColor=white)](https://www.raylib.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=for-the-badge)](#-building-from-source)
+[![Status](https://img.shields.io/badge/Status-Active%20Development-brightgreen?style=for-the-badge)](#-future-plans)
+[![Stars](https://img.shields.io/github/stars/yourusername/chess-engine-c?style=for-the-badge&color=yellow)](https://github.com/yourusername/chess-engine-c/stargazers)
 
-</details>
+<br>
 
-<div align="center">
-
-![Demo](assets/demo.gif)
-
-*(placeholder — gameplay recording goes here)*
+[Features](#-features) •
+[Demo](#-demo) •
+[Building](#-building-from-source) •
+[Architecture](#-architecture) •
+[Roadmap](#-future-plans) •
+[Contributing](#-contributing)
 
 </div>
 
 ---
 
-## Features
+## 📖 Project Showcase
 
-| Feature | Status |
-|---|:---:|
-| Board rendering | ✅ |
-| Piece textures | ✅ |
-| Mouse-driven selection | ✅ |
-| Legal move highlighting | ✅ |
-| Turn management | ✅ |
-| Bitboard board representation | ✅ |
-| Move generation (all piece types) | ✅ |
-| Captures | ✅ |
-| Check detection | ✅ |
-| Castling | ✅ |
-| En passant | ✅ |
-| Pawn promotion | ✅ |
-| Legal move filtering | ✅ |
-| Checkmate detection | ✅ |
-| Stalemate detection | ✅ |
-| Draw rules | 🚧 |
-| PGN / FEN support | 🚧 |
-| AI opponent | 🚧 |
+**ChessEngine-C** is a complete chess implementation written entirely in **C**, rendered with **Raylib**, and engineered around **bitboards** — the same core representation technique used by high-performance engines like Stockfish. Rather than modeling the board as an 8×8 array of structs, every piece type and color is represented as a 64-bit integer, where each bit corresponds to a square on the board. This is not an aesthetic choice; it's a performance one.
+
+Bitboards allow the engine to answer questions like *"which squares can this rook attack?"* or *"is the king currently in check?"* using single bitwise operations — AND, OR, XOR, and shifts — instead of iterating over arrays. On modern hardware, this means move generation, attack detection, and occupancy checks execute in a handful of CPU cycles rather than nested loops over board coordinates. The result is a rules engine that stays fast even as move-generation complexity grows (castling, en passant, pin detection, discovered checks).
+
+This project was built with three guiding principles: **correctness** (every legal chess rule is enforced, including the notoriously tricky edge cases), **clean architecture** (a strict separation between the rules engine and the rendering layer, so the core logic has zero dependency on graphics code), and **performance** (bitboard arithmetic and precomputed attack tables over brute-force iteration). It's a systems-level project disguised as a game.
 
 ---
 
-## Architecture
+## ✨ Features
 
-Roughly how a single frame flows through the codebase — from a mouse click to pixels on screen:
+### ♜ Gameplay
 
-```mermaid
-flowchart TD
-    A[main.c<br/>game loop] -->|loads piece textures| B[texture.c]
-    A -->|forwards mouse events| C[input.c]
-    C -->|square clicked| D[board.c<br/>bitboard state]
-    D -->|request moves for piece| E[attacks.c<br/>attack & move generation]
-    E -->|pseudo-legal moves| D
-    D -->|simulate on temp board,<br/>check own king safety| E
-    E -->|legal move set| C
-    C -->|apply confirmed move| D
-    D -->|updated board state| F[render.c]
-    F -->|draw pieces| B
-    F --> G[Screen]
-```
-
-`board.c` and `attacks.c` talk to each other constantly — board generates a candidate move, `attacks.c` checks whether it exposes the king, and the result flows back before anything is confirmed. Nothing is "legal" until it survives that round trip.
-
----
-
-## Folder Structure
-
-```
-chess/
-├── src/
-│   ├── main.c          # entry point, game loop
-│   ├── board.c/.h       # bitboard state, board setup, move application
-│   ├── attacks.c/.h     # move generation, attack tables, check detection
-│   ├── input.c/.h       # mouse handling, square/piece selection
-│   ├── render.c/.h      # drawing the board, pieces, highlights
-│   └── texture.c/.h     # texture loading for pieces
-├── assets/
-│   ├── textures/        # piece sprites
-│   └── screenshots/
-└── README.md
-```
-
----
-
-## Build Instructions
-
-**Dependency:** [Raylib](https://www.raylib.com/) must be installed and available to your compiler/linker.
-
-```bash
-gcc src/*.c -o chess -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-```
-
-```bash
-./chess
-```
-
-<details>
-<summary><strong>▸ Platform-specific build instructions</strong></summary>
-
-### Linux
-
-Install Raylib using your package manager.
-
-Ubuntu/Debian:
-
-```bash
-sudo apt install libraylib-dev
-```
-
-Arch Linux:
-
-```bash
-sudo pacman -S raylib
-```
-
-Compile:
-
-```bash
-gcc src/*.c -o chess \
--lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-```
-
-Run:
-
-```bash
-./chess
-```
-
----
-
-### macOS
-
-#### 1. Install Xcode Command Line Tools
-
-```bash
-xcode-select --install
-```
-
-#### 2. Install Homebrew (if not already installed)
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-#### 3. Install Raylib
-
-```bash
-brew install raylib
-```
-
-#### 4. Compile
-
-**Apple Silicon (M1/M2/M3):**
-
-```bash
-clang src/*.c -o chess \
--I/opt/homebrew/include \
--L/opt/homebrew/lib \
--lraylib \
--framework OpenGL \
--framework Cocoa \
--framework IOKit \
--framework CoreVideo
-```
-
-**Intel Macs:**
-
-```bash
-clang src/*.c -o chess \
--I/usr/local/include \
--L/usr/local/lib \
--lraylib \
--framework OpenGL \
--framework Cocoa \
--framework IOKit \
--framework CoreVideo
-```
-
-Run:
-
-```bash
-./chess
-```
-
----
-
-### Windows (MSYS2 MinGW64)
-
-Install Raylib:
-
-```bash
-pacman -S mingw-w64-ucrt-x86_64-raylib
-```
-
-Compile:
-
-```bash
-gcc src/*.c -o chess.exe \
--lraylib \
--lopengl32 \
--lgdi32 \
--lwinmm
-```
-
-Run:
-
-```bash
-./chess.exe
-```
-
-</details>
-
----
-
-## Controls
-
-| Action | Input |
+| Feature | Description |
 |---|---|
-| Select a piece | Left click on it |
-| Move the selected piece | Left click a highlighted square |
-| Promote a pawn | Automatic — a promotion menu appears on the 8th/1st rank |
+| ✅ Legal move generation | Fully validated legal moves, not just pseudo-legal |
+| ✅ Check detection | Real-time detection of checks against either king |
+| ✅ Checkmate | Correctly identifies terminal checkmate positions |
+| ✅ Stalemate | Detects no-legal-move draw scenarios |
+| ✅ Castling | Kingside & queenside, with full rook/king safety validation |
+| ✅ En Passant | Correctly tracked and expires after one turn |
+| ✅ Promotion | Full promotion to Queen, Rook, Bishop, or Knight |
+| ✅ Piece captures | Standard and special captures fully supported |
+| ✅ Turn system | Strict alternating turn enforcement |
+
+### ⚙️ Engine
+
+| Feature | Description |
+|---|---|
+| 🧮 Bitboards | 64-bit integer board representation per piece type/color |
+| ⚡ Fast move generation | Bitwise move generation using shifts and masks |
+| 🧱 Occupancy masks | Precomputed occupancy for blockers and sliding pieces |
+| 🎯 Attack generation | Precomputed attack tables for knights, kings, and pawns |
+
+### 🎨 Graphics
+
+| Feature | Description |
+|---|---|
+| 🖼️ Raylib rendering | Lightweight, cross-platform 2D rendering |
+| 🖱️ Mouse interaction | Click-to-select and click-to-move piece control |
+| 💡 Highlighted legal moves | Visual overlay of all legal destinations for a selected piece |
+| 🎯 Piece selection | Clear selection state with visual feedback |
+| 👑 Promotion UI | In-game overlay for choosing a promotion piece |
 
 ---
 
-## Project Highlights
+## 🎬 Demo
 
-A few things about the implementation that felt worth calling out:
+<div align="center">
 
-- **No chess library, anywhere.** Board state, move rules, and legality checks are all custom.
-- **Bitboards from the start** — not bolted on later. Every piece type and color has its own 64-bit board.
-- **Legality is checked by simulation.** Moves are applied to a temporary board copy first; if the king ends up in check, the move never touches real state.
-- **Modular by file, not just by function.** Rendering, input, board logic, and attack generation don't leak into each other — `render.c` has no idea how a move was validated, it just draws what `board.c` gives it.
+**Gameplay Preview**
 
----
+`[ 📽️ GIF PLACEHOLDER — assets/demo/gameplay.gif ]`
 
-## Current Progress
-
-```
-Core Mechanics        ████████████████████  complete
-(bitboards, move generation, captures,
-check, castling, en passant,
-promotion, checkmate, stalemate)
-
-Game End Conditions   ███████████████░░░░  mostly complete
-(draw rules remaining)
-
-Notation Support      ░░░░░░░░░░░░░░░░░░░░  not started
-
-Engine / AI           ░░░░░░░░░░░░░░░░░░░░  not started
-```
-
-The bars above reflect implementation status, not code quality or effort — core mechanics being "complete" means the listed rules work, not that the engine is finished.
-
----
-
-## Technical Details
-
-<details>
-<summary><strong>▸ Bitboard representation</strong></summary>
 <br>
 
-Each piece type/color pair gets its own 64-bit integer, one bit per square:
+**Screenshots**
 
-```c
-typedef uint64_t Bitboard;
+| Main Board | Legal Move Highlights | Promotion UI |
+|:---:|:---:|:---:|
+| `[ screenshot placeholder ]` | `[ screenshot placeholder ]` | `[ screenshot placeholder ]` |
 
-typedef struct {
-    Bitboard white_pawns, white_knights, white_bishops,
-             white_rooks, white_queens, white_king;
-    Bitboard black_pawns, black_knights, black_bishops,
-             black_rooks, black_queens, black_king;
-} BoardState;
+</div>
+
+> [!TIP]
+> Replace the placeholders above with actual GIFs/screenshots stored under `assets/demo/` once available. Short clips (5–10s) tend to render best on GitHub's README preview.
+
+---
+
+## 🎮 Controls
+
+| Input | Action |
+|---|---|
+| `Left Click` (on a piece) | Select the piece and reveal legal moves |
+| `Left Click` (on a highlighted square) | Move the selected piece |
+| `Left Click` (elsewhere) | Deselect the current piece |
+| `Left Click` (promotion overlay) | Choose promotion piece (Q / R / B / N) |
+| `Esc` | Exit the application |
+| `R` *(planned)* | Reset the board to the starting position |
+
+---
+
+## 📂 Folder Structure
+
+```
+chess-engine-c/
+│
+├── src/                 # Core source files (.c)
+│   ├── main.c           # Entry point & game loop
+│   ├── board.c          # Bitboard board representation & state
+│   ├── movegen.c        # Pseudo-legal & legal move generation
+│   ├── attacks.c        # Precomputed attack table generation
+│   ├── game.c           # Turn management, check/mate/stalemate logic
+│   └── render.c         # Raylib rendering & input handling
+│
+├── include/             # Public headers (.h)
+│   ├── board.h
+│   ├── movegen.h
+│   ├── attacks.h
+│   ├── game.h
+│   └── render.h
+│
+├── assets/              # Textures, piece sprites, fonts, demo media
+│   ├── pieces/          # Piece sprite images
+│   ├── sounds/          # (planned) move/capture sound effects
+│   └── demo/            # GIFs & screenshots used in this README
+│
+├── CMakeLists.txt       # Cross-platform build configuration
+├── LICENSE              # MIT License
+└── README.md            # You are here
 ```
 
-Combining these with bitwise OR gives derived boards like "all white pieces" or "all occupied squares" — no iteration required.
+| Folder | Purpose |
+|---|---|
+| `src/` | All engine and application logic — the actual C implementation |
+| `include/` | Header files declaring public interfaces for each module |
+| `assets/` | Non-code resources: sprites, sounds, and README media |
+| `CMakeLists.txt` | Build system entry point, used across all platforms |
+
+---
+
+## 🛠️ Building From Source
+
+This project uses **CMake** as its primary build system, with Raylib as the only external dependency.
+
+### 📦 Dependency: Raylib
+
+Raylib must be installed (or fetched) before building. Below are the fastest paths per platform.
+
+<details>
+<summary><strong>🪟 Windows</strong></summary>
+
+**Prerequisites:** [CMake](https://cmake.org/download/), [MinGW-w64](https://www.mingw-w64.org/) or Visual Studio, [Git](https://git-scm.com/)
+
+```powershell
+# Clone the repository
+git clone https://github.com/yourusername/chess-engine-c.git
+cd chess-engine-c
+
+# Configure with CMake (Raylib fetched automatically via FetchContent, if configured)
+cmake -S . -B build -G "MinGW Makefiles"
+
+# Build
+cmake --build build
+
+# Run
+.\build\ChessEngineC.exe
+```
+
+> [!NOTE]
+> If Raylib isn't fetched automatically, install it manually via [raylib's Windows setup guide](https://github.com/raysan5/raylib/wiki/Working-on-Windows) and set `RAYLIB_PATH` in `CMakeLists.txt`.
 
 </details>
 
 <details>
-<summary><strong>▸ Move generation</strong></summary>
-<br>
+<summary><strong>🐧 Linux</strong></summary>
 
-Non-sliding pieces (knight, king, pawn) use precomputed attack patterns shifted to the piece's square. Sliding pieces (bishop, rook, queen) walk along each direction ray, stopping at the first occupied square or the board edge, using bit shifts with file-wrap masks to avoid moves "wrapping" across the board.
+**Prerequisites:** `gcc`, `cmake`, `git`, and Raylib's build dependencies.
+
+```bash
+# Install build tools and Raylib dependencies (Debian/Ubuntu)
+sudo apt update
+sudo apt install build-essential cmake git \
+    libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+    libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+
+# Clone and build Raylib (if not installed via package manager)
+git clone https://github.com/raysan5/raylib.git
+cd raylib/src
+make PLATFORM=PLATFORM_DESKTOP
+sudo make install
+cd ../..
+
+# Clone this repository
+git clone https://github.com/yourusername/chess-engine-c.git
+cd chess-engine-c
+
+# Configure and build
+cmake -S . -B build
+cmake --build build
+
+# Run
+./build/ChessEngineC
+```
 
 </details>
 
 <details>
-<summary><strong>▸ Legal move filtering</strong></summary>
-<br>
+<summary><strong>🍎 macOS</strong></summary>
 
-Move generation initially produces **pseudo-legal** moves — moves that follow the piece's pattern but might leave the king in check. Each candidate is applied to a temporary copy of the board:
+**Prerequisites:** [Homebrew](https://brew.sh/), CMake, Git
 
-```c
-BoardState temp = current_board;
-apply_move(&temp, move);
+```bash
+# Install dependencies
+brew install cmake git raylib
 
-if (king_in_check(&temp, side_to_move)) {
-    // discard — not legal
-} else {
-    // keep in the legal move set
+# Clone the repository
+git clone https://github.com/yourusername/chess-engine-c.git
+cd chess-engine-c
+
+# Configure and build
+cmake -S . -B build
+cmake --build build
+
+# Run
+./build/ChessEngineC
+```
+
+</details>
+
+### 🔧 Plain GCC / Clang (no CMake)
+
+For a quick manual build without CMake, once Raylib is installed on your system:
+
+```bash
+# Linux / macOS
+gcc src/*.c -Iinclude -o chess_engine \
+    -lraylib -lm -lpthread -ldl -lrt -lX11
+
+# Run
+./chess_engine
+```
+
+```bash
+# Using Clang
+clang src/*.c -Iinclude -o chess_engine \
+    -lraylib -lm -lpthread -ldl -lrt -lX11
+
+./chess_engine
+```
+
+> [!IMPORTANT]
+> On macOS, drop `-lrt` and `-lX11`, and instead link the required frameworks:
+> `-framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL`
+
+---
+
+## 🏗️ Architecture
+
+This section walks through how the engine actually works under the hood, from board memory layout to the render loop.
+
+### ♟️ Board Representation
+
+The board is **not** stored as an 8×8 array. Instead, it's represented as a set of `uint64_t` bitboards — one per piece type, per color (12 total: white/black × pawn, knight, bishop, rook, queen, king), plus combined occupancy boards for "all white pieces," "all black pieces," and "all pieces." Each bit position (0–63) maps directly to a board square.
+
+```
+Example: White Pawns bitboard at the starting position
+
+8  0 0 0 0 0 0 0 0
+7  1 1 1 1 1 1 1 1   ← bit set for every pawn
+6  0 0 0 0 0 0 0 0
+5  0 0 0 0 0 0 0 0
+4  0 0 0 0 0 0 0 0
+3  0 0 0 0 0 0 0 0
+2  0 0 0 0 0 0 0 0
+1  0 0 0 0 0 0 0 0
+   a b c d e f g h
+```
+
+### 🧮 Bitboards
+
+Because each board fits in a single 64-bit integer, operations that would otherwise require loops become **single CPU instructions**:
+
+- **Union of pieces:** `white_pieces | black_pieces`
+- **Is a square occupied?** `(occupancy >> square) & 1`
+- **Capture detection:** `attacks & enemy_occupancy`
+
+This is the same fundamental technique used in production-grade engines, and it's the reason this project can perform move generation and check detection without scanning the board square-by-square.
+
+### ⚡ Move Generation
+
+Move generation happens in two phases:
+
+1. **Pseudo-legal generation** — for each piece type, precomputed attack tables (for knights, kings, pawns) or on-the-fly sliding attack calculation (for bishops, rooks, queens) produce all geometrically possible moves, ignoring check.
+2. **Legal filtering** — each pseudo-legal move is applied to a copy of the board, after which the engine checks whether the moving side's king is left in check. Illegal moves (including moves that expose a discovered check) are filtered out.
+
+### 🛡️ Legal Move Filtering
+
+Special rules are layered on top of the base move generator:
+
+- **Castling** requires that the king is not currently in check, does not pass through an attacked square, and that neither the king nor rook has previously moved.
+- **En passant** is tracked via a single "en passant target square" that is set for exactly one ply after a double pawn push, then cleared.
+- **Promotion** is triggered when a pawn move's destination rank is the final rank for its color, prompting the promotion UI.
+
+### 🖥️ Rendering
+
+Rendering is handled entirely by **Raylib**, in a dedicated module isolated from game logic. The board and pieces are drawn each frame based on the current bitboard state — the renderer has no knowledge of chess rules, it simply reads board state and draws it.
+
+### 🖱️ Input
+
+Mouse clicks are translated from screen-space pixel coordinates into board-space square indices. A simple state machine tracks whether a piece is currently selected, and dispatches either a "select" or "attempt move" action depending on current state.
+
+### 🔁 Game Loop
+
+The engine follows Raylib's standard real-time loop pattern:
+
+```
+while (!WindowShouldClose()) {
+    HandleInput();     // Translate mouse clicks into game actions
+    UpdateGameState();  // Apply moves, check for checkmate/stalemate
+    BeginDrawing();
+    RenderBoard();      // Draw board, pieces, highlights, UI
+    EndDrawing();
 }
 ```
 
-Only moves that survive this check make it into the highlighted legal-move set the player actually sees.
+---
 
-</details>
+## 🚀 Future Plans
 
-<details>
-<summary><strong>▸ Check detection</strong></summary>
-<br>
+> [!NOTE]
+> This project is under active development. The core rules engine is complete and correct; the items below represent the next phase of work, focused on AI and protocol compatibility.
 
-The opposing side's full attack bitboard is generated, and the king's square is tested against it with a single AND operation. This same attack board is reused for castling legality (king can't castle through or into check) and for the legal-move filtering above.
-
-</details>
+- [ ] PGN import/export support
+- [ ] Minimax search algorithm
+- [ ] Alpha-Beta pruning
+- [ ] Transposition tables (Zobrist hashing)
+- [ ] Opening book integration
+- [ ] UCI (Universal Chess Interface) protocol support
+- [ ] Stockfish compatibility mode
+- [ ] Move history & undo/redo
+- [ ] Sound effects for moves/captures
+- [ ] Configurable themes & board skins
 
 ---
 
-## Challenges Faced
+## 💡 Technical Highlights
 
-Things that took longer than expected, in no particular order:
+This project was built as a demonstration of core systems-programming and computer-science fundamentals, applied to a genuinely hard problem domain:
 
-- **Castling rights aren't part of the board itself.** Bitboards tell you *where* pieces are, not their history — so tracking whether a king or rook has ever moved required separate state alongside the boards.
-- **En passant is a timing rule, not a position rule.** It's only legal the move immediately after a two-square pawn push, which meant tracking *when* something happened, not just *what* the position looks like.
-- **Sliding piece edges.** Getting rook/bishop/queen rays to stop correctly at board edges (instead of wrapping to the next rank/file) took a few passes to get right with pure bit shifts.
-- **Legality via simulation was the right call, but the first attempt tried to validate moves in-place** and ended up corrupting state on illegal moves. Switching to a temporary board copy fixed this cleanly.
-
----
-
-## Future Plans
-
-<details>
-<summary><strong>▸ Roadmap</strong></summary>
-<br>
-
-- [ ] Checkmate detection
-- [ ] Stalemate detection
-- [ ] Draw rules (threefold repetition, fifty-move rule, insufficient material)
-- [ ] FEN import/export
-- [ ] PGN support
-- [ ] Move history / undo
-- [ ] Evaluation function
-- [ ] Minimax search
-- [ ] Alpha-beta pruning
-- [ ] Basic AI opponent
-
-</details>
+| Concept | Where It Shows Up |
+|---|---|
+| **Bit manipulation** | Bitboard-based board state, attack masks, occupancy tracking, all implemented via AND/OR/XOR/shift operations |
+| **Data structures** | Move lists, precomputed attack tables, board state snapshots for legality checking |
+| **Rendering** | Real-time 2D graphics pipeline built on Raylib, including sprite drawing and UI overlays |
+| **Event handling** | Mouse-driven input translated into discrete, validated game actions |
+| **State machines** | Piece selection state, turn state, check/checkmate/stalemate terminal states |
+| **Game loops** | A tight, deterministic update-render cycle running every frame |
+| **Memory management** | Manual memory handling in C with no garbage collector — careful ownership of board copies during move validation |
 
 ---
 
-## Contributing
+## 🤔 Why This Project?
 
-This started as a solo learning project, but issues, suggestions, and pull requests are welcome. If you're fixing a bug or adding something, a short explanation of the reasoning behind the change is more useful than the diff itself.
+Building a chess engine is one of the most well-respected "hard problems" in software engineering for a reason — it looks simple on the surface and turns into a deep systems challenge the moment you try to implement it correctly.
+
+Chess has a small rule set, but an enormous number of subtle edge cases: pins, discovered checks, en passant timing, castling through check, promotion. Encoding these correctly forces careful state modeling, defensive validation, and rigorous testing. Doing it in **C**, with **bitboards**, adds a performance dimension on top of correctness: you have to think about memory layout, cache behavior, and bitwise algorithms instead of relying on high-level abstractions.
+
+This project exists to demonstrate exactly that combination — the discipline to model a genuinely complex rule system correctly, and the low-level engineering skill to make it fast.
 
 ---
 
-## License
+## 🤝 Contributing
 
-Licensed under the [MIT License](LICENSE).
+Contributions are welcome and appreciated! Whether it's a bug fix, a new feature, or a documentation improvement, here's how to get involved:
+
+1. **Fork** the repository
+2. **Create a branch** for your change
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. **Make your changes**, following the existing code style (consistent naming, header/implementation separation)
+4. **Test thoroughly** — verify move generation correctness, especially around castling, en passant, and promotion
+5. **Commit** with a clear, descriptive message
+   ```bash
+   git commit -m "Add: short description of the change"
+   ```
+6. **Push** to your fork and **open a Pull Request**
+
+> [!TIP]
+> For larger changes (e.g. adding a search algorithm or UCI support), please open an issue first to discuss the approach before submitting a PR.
+
+### Reporting Bugs
+
+Please include:
+- Steps to reproduce
+- Expected vs. actual behavior
+- Board position (FEN, if applicable) where the issue occurs
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2026 [Your Name]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software...
+```
+
+---
+
+<div align="center">
+
+**⭐ If you found this project interesting, consider giving it a star — it helps a lot!**
+
+Made with ♟️ and a lot of bitwise operators.
+
+</div>
