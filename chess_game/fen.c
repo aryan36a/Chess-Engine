@@ -136,7 +136,29 @@ bool loadFEN(const char *fen){
         board.enPassantSquare=rank*8+file;
     }
 
+    if(*fen==' '){
+        fen++;
+    }
+
+    board.halfMoveClock=0;
+
+    while(isdigit((unsigned char)*fen)){
+        board.halfMoveClock=board.halfMoveClock*10+(*fen-'0');
+        fen++;
+    }
+
+    if(*fen==' '){
+        fen++;
+    }
+
+    while(isdigit((unsigned char)*fen)){
+        fen++;
+    }
+    
     updateOccupancy();
+    
+    board.positionHistory[0]=generateHash();
+    board.historyCount=1;
 
     return true;
 }

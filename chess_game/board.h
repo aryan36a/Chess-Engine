@@ -5,6 +5,13 @@
 #include<stdint.h>
 #include<stdbool.h>
 
+//Zorbist hashing
+void initZobrist(void);
+
+uint64_t generateHash(void);
+
+bool isThreefoldRepetition(void);
+
 //Enums
 typedef enum{
     EMPTY=0,
@@ -29,6 +36,7 @@ typedef enum{
     BLACK_TURN
 } Turn;
 
+#define MAX_POSITION_HISTORY 1024
 //Board Structure
 typedef struct
 {
@@ -61,6 +69,11 @@ typedef struct
     
     int enPassantSquare;
 
+    int halfMoveClock;
+
+    uint64_t positionHistory[MAX_POSITION_HISTORY];
+    int historyCount;
+
 }Board;
 
 //Move Structure
@@ -91,6 +104,9 @@ extern Piece selectedPiece;
 bool hasLegalMoves(bool white);
 bool isCheckMate(bool white);
 bool isStaleMate(bool white);
+bool isFiftyMove(void);
+bool isInsufficientMaterial(void);
+bool isThreeFoldRepetition(void);
 
 //Board Functions
 void initBoard(void);

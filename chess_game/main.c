@@ -24,8 +24,12 @@ int main(void){
     InitWindow(BOARD_SIZE*TILE_SIZE,BOARD_SIZE*TILE_SIZE,"CHESS");
 
     LoadPieceTextures();
-    initBoard();
-    //loadFEN("7k/4Q3/6K1/8/8/8/8/8 w - - 0 1");
+    //Init zorbist
+    initZobrist();
+
+    initBoard(); //Only comment/disable if you are using FEN generator
+    //loadFEN(""); //Enter your customer FEN here for testing purposes
+    
     //Hover Colour
     Color hover=(Color){144,238,144,150};
     Color selected=(Color){173,216,255,150};

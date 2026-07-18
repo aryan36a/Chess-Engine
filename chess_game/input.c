@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<raylib.h>
+#include<stdlib.h>
 
 #include "board.h"
 #include "input.h"
@@ -119,6 +120,7 @@ void HandlePromotionClick(Vector2 mouse){
 
     toggleTurn();
     detectCheckAndStaleMate();
+    board.positionHistory[board.historyCount++]=generateHash();
 
     selectedSquare=-1;
     selectedPiece=EMPTY;
@@ -126,7 +128,6 @@ void HandlePromotionClick(Vector2 mouse){
 
 
 }
-
 void detectCheckAndStaleMate(void){
 
     bool white=(currentTurn==WHITE_TURN);
@@ -136,5 +137,11 @@ void detectCheckAndStaleMate(void){
     }
     else if(isStaleMate(white)){
         printf("Stalemate!\n");
+    }else if(isFiftyMove()){
+        printf("Draw by fifty move rule\n");
+    }else if(isInsufficientMaterial()){
+        printf("Draw by insufficient meterial\n");
+    }else if(isThreeFoldRepetition()){
+        printf("Draw by three fold repetition\n");
     }
 }

@@ -1,3 +1,5 @@
+#include<stdlib.h>
+
 #include "board.h"
 #include "attacks.h"
 
@@ -14,6 +16,14 @@ Turn currentTurn=WHITE_TURN;
 PromotionMenu promotionMenu={false,-1,EMPTY};
 
 static Board temporaryBoard;
+
+//zorbist hashing
+static uint64_t zobristPieces[12][64];
+static uint64_t zobristSide;
+static uint64_t zobristCastle[16];
+static uint64_t zobristEnPassant[8];
+
+
 
 bool isWhitePiece(Piece piece){
     return piece>=WHITE_PAWN && piece<=WHITE_KING;
@@ -38,6 +48,7 @@ void clearBoard(void){
     board.blackKing = 0ULL;
 
     updateOccupancy();
+    board.halfMoveClock=0;
 
 }
 
@@ -138,12 +149,103 @@ void initBoard(void)
     board.occupied =
         board.whitePieces |
         board.blackPieces;
+
+    //half move clock
+    board.halfMoveClock=0;
+
+    //zorbist hashing
+    board.historyCount=0;
+    board.positionHistory[0]=generateHash();
+    board.historyCount=1;
+}
+
+//Random number helper function
+static uint64_t random_64(void){
+    uint64_t value=0;
+    for(int i=0;i<5;i++){
+        value<<=15;
+        value^=(uint64_t)(rand()&0x7FFF);
+    }
+    return value;
+}
+//init zobrist
+void initZobrist(void){
+    srand(11112006);//cutu's birthdate
+    for(int piece=0;piece<12;piece++){
+        for(int square=0;square<64;square++){
+            zobristPieces[piece][square]=random_64();
+        }
+    }
+    for(int i=0;i<16;i++){
+        zobristCastle[i]=random_64();
+    }
+    for(int i=0;i<8;i++){
+        zobristEnPassant[i]=random_64();
+    }
+    zobristSide=random_64();
+}
+
+
+//Hash function
+uint64_t generateHash(void){
+    uint64_t hash=0;
+
+    //General
+    for(int square=0;square<64;square++){
+        Piece piece=GetPieceAtSquare(square);
+
+        if(piece!=EMPTY){
+            hash^=zobristPieces[piece][square];
+        }
+    }
+
+    //Turn
+    if(currentTurn==BLACK_TURN){
+        hash^zobristSide;
+    }
+
+    //Castling
+    int castleRights=0;
+    if(!board.whiteKingsideRookMoved&&!board.whiteKingMoved){
+        castleRights|=1;
+    }
+    if(!board.whiteQueensideRookMoved&&!board.whiteKingMoved){
+        castleRights|=2;
+    }
+    if(!board.blackKingsideRookMoved&&!board.blackKingMoved){
+        castleRights|=4;
+    }
+    if(!board.blackQueensideRookMoved&&!board.blackKingMoved){
+        castleRights|=8;
+    }
+    hash^=zobristCastle[castleRights];
+
+    //En Passant
+    if(board.enPassantSquare){
+        int file=board.enPassantSquare%8;
+        hash^=zobristEnPassant[file];
+    }
+
+    return hash;
 }
 
 bool isBitSet(uint64_t bitboard, int square){
     return (bitboard&(1ULL<<square))!=0;
 }
 
+bool isThreeFoldRepetition(void){
+    uint64_t currentHash=generateHash();
+    int count=0;
+    for(int i=0;i<board.historyCount;i++){
+        if(board.positionHistory[i]=currentHash){
+            count++;
+        }
+        if(count>3){
+            return true;
+        }
+    }
+    return false;
+}
 Piece GetPieceAtSquare(int square)
 {
     if (isBitSet(board.whitePawns, square))   return WHITE_PAWN;
@@ -573,7 +675,19 @@ void performCastle(int from,int to){
 
 void makeMove(Move move){
 
+    //Half move updation
+    bool isCapture=GetPieceAtSquare(move.to)!=EMPTY;
+    
     Piece movingPiece = GetPieceAtSquare(move.from);
+
+    if((movingPiece==WHITE_PAWN||movingPiece==BLACK_PAWN)&&move.to==board.enPassantSquare&&move.from%8!=move.to%8){
+        isCapture=true;
+    }
+    if(selectedPiece==BLACK_PAWN||selectedPiece==WHITE_PAWN||isCapture){
+        board.halfMoveClock=0;
+    }else{
+        board.halfMoveClock++;
+    }
     
     if(movingPiece!=WHITE_PAWN&&movingPiece!=BLACK_PAWN){
             board.enPassantSquare=-1;
@@ -897,6 +1011,79 @@ bool hasLegalMoves(bool white){
     return false;
 }
 
+
+//Counter helper function
+static int countPieces(uint64_t bitboard){
+    int count=0;
+
+    while(bitboard){
+        bitboard&=bitboard-1;
+        count++;
+    }
+    return count;
+}
+//Square colour helper
+bool isLightSquare(int square){
+    int row=square/8;
+    int col=square%8;
+
+    return (row+col)%2==0;
+}
+
+//Insufficient material
+bool isInsufficientMaterial(void){
+    int whitePawns=countPieces(board.whitePawns);
+    int blackPawns=countPieces(board.blackPawns);
+
+    int whiteRooks=countPieces(board.whiteRooks);
+    int blackRooks=countPieces(board.blackRooks);
+
+    int whiteQueens=countPieces(board.whiteQueens);
+    int blackQueens=countPieces(board.blackQueens);
+
+    int whiteKnights=countPieces(board.whiteKnights);
+    int blackKnights=countPieces(board.blackKnights);
+
+    int whiteBishops=countPieces(board.whiteBishops);
+    int blackBishops=countPieces(board.blackBishops);
+
+    //playable conditions
+    if(whitePawns||blackPawns||whiteRooks||blackRooks||whiteQueens||blackQueens){
+        return false;
+    }
+
+    //king vs king
+    if(!whiteKnights&&!blackKnights&&!whiteBishops&&!blackBishops){
+        return true;
+    }
+
+    //king+knight vs king
+    if(whiteKnights==1&&!whiteBishops&&!blackKnights&&!blackBishops){
+        return true;
+    }
+    if(blackKnights==1&&!whiteKnights&&!whiteBishops&&!blackBishops){
+        return true;
+    }
+
+    //king+bishop vs king
+    if(whiteBishops==1&&!blackBishops&&!whiteKnights&&!blackKnights){
+        return true;
+    }
+    if(blackBishops==1&&!whiteBishops&&!whiteKnights&&!blackKnights){
+        return true;
+    }
+
+    if(whiteBishops==1&&blackBishops==1&&!whiteKnights&&!blackKnights){
+        int whiteSquare=__builtin_ctzll(board.whiteBishops);
+        int blackSquare=__builtin_ctzll(board.blackBishops);
+
+        if(isLightSquare(whiteSquare)==isLightSquare(blackSquare)){
+            return true;
+        }
+    }
+    return false;
+}
+
 //CheckMate
 bool isCheckMate(bool white){
     return isKingInCheck(white) && !hasLegalMoves(white);
@@ -904,4 +1091,8 @@ bool isCheckMate(bool white){
 //StaleMate
 bool isStaleMate(bool white){
     return !isKingInCheck(white) && !hasLegalMoves(white);
+}
+//50 move rule
+bool isFiftyMove(void){
+    return board.halfMoveClock>=100;
 }
