@@ -5,6 +5,7 @@
 #include "render.h"
 #include "texture.h"
 #include "input.h"
+#include "fen.h"
 
 #define BOARD_SIZE 8
 #define TILE_SIZE 128
@@ -24,7 +25,7 @@ int main(void){
 
     LoadPieceTextures();
     initBoard();
-
+    //loadFEN("7k/4Q3/6K1/8/8/8/8/8 w - - 0 1");
     //Hover Colour
     Color hover=(Color){144,238,144,150};
     Color selected=(Color){173,216,255,150};

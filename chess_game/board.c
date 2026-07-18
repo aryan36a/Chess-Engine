@@ -22,6 +22,25 @@ bool isBlackPiece(Piece piece){
     return piece>=BLACK_PAWN && piece<=BLACK_KING;
 }
 
+void clearBoard(void){
+    board.whitePawns = 0ULL;
+    board.whiteKnights = 0ULL;
+    board.whiteBishops = 0ULL;
+    board.whiteRooks = 0ULL;
+    board.whiteQueens = 0ULL;
+    board.whiteKing = 0ULL;
+
+    board.blackPawns = 0ULL;
+    board.blackKnights = 0ULL;
+    board.blackBishops = 0ULL;
+    board.blackRooks = 0ULL;
+    board.blackQueens = 0ULL;
+    board.blackKing = 0ULL;
+
+    updateOccupancy();
+
+}
+
 void initBoard(void)
 
 {

@@ -111,6 +111,10 @@ void promotePawn(int square,Piece promotedPiece);
 
 void makeMove(Move move);
 
+void clearBoard(void);
+
+void updateOccupancy(void);
+
 //Piece Move Generation
 void generateWhitePawnMoves(int square);
 void generateBlackPawnMoves(int square);
