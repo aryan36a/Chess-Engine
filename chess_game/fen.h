@@ -5,10 +5,4 @@
 
 bool loadFEN(const char *fen);
 
-char *exportFEN(void);
-
-int squareFromString(const char *str);
-
-void squareToString(int square,char *buffer);
-
 #endif
