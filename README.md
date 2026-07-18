@@ -74,8 +74,8 @@ The board uses **bitboards** (64-bit integers, one bit per square) rather than a
 | En passant | ✅ |
 | Pawn promotion | ✅ |
 | Legal move filtering | ✅ |
-| Checkmate detection | 🚧 |
-| Stalemate detection | 🚧 |
+| Checkmate detection | ✅ |
+| Stalemate detection | ✅ |
 | Draw rules | 🚧 |
 | PGN / FEN support | 🚧 |
 | AI opponent | 🚧 |
@@ -137,15 +137,118 @@ gcc src/*.c -o chess -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 ```
 
 <details>
-<summary><strong>▸ Notes for macOS / Windows</strong></summary>
-<br>
+<summary><strong>▸ Platform-specific build instructions</strong></summary>
 
-Linker flags differ per platform since Raylib links against different system libraries:
+### Linux
 
-- **macOS:** `-lraylib -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL`
-- **Windows (MinGW):** `-lraylib -lopengl32 -lgdi32 -lwinmm`
+Install Raylib using your package manager.
 
-Refer to the [Raylib build guide](https://github.com/raysan5/raylib/wiki) for your specific toolchain.
+Ubuntu/Debian:
+
+```bash
+sudo apt install libraylib-dev
+```
+
+Arch Linux:
+
+```bash
+sudo pacman -S raylib
+```
+
+Compile:
+
+```bash
+gcc src/*.c -o chess \
+-lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+```
+
+Run:
+
+```bash
+./chess
+```
+
+---
+
+### macOS
+
+#### 1. Install Xcode Command Line Tools
+
+```bash
+xcode-select --install
+```
+
+#### 2. Install Homebrew (if not already installed)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+#### 3. Install Raylib
+
+```bash
+brew install raylib
+```
+
+#### 4. Compile
+
+**Apple Silicon (M1/M2/M3):**
+
+```bash
+clang src/*.c -o chess \
+-I/opt/homebrew/include \
+-L/opt/homebrew/lib \
+-lraylib \
+-framework OpenGL \
+-framework Cocoa \
+-framework IOKit \
+-framework CoreVideo
+```
+
+**Intel Macs:**
+
+```bash
+clang src/*.c -o chess \
+-I/usr/local/include \
+-L/usr/local/lib \
+-lraylib \
+-framework OpenGL \
+-framework Cocoa \
+-framework IOKit \
+-framework CoreVideo
+```
+
+Run:
+
+```bash
+./chess
+```
+
+---
+
+### Windows (MSYS2 MinGW64)
+
+Install Raylib:
+
+```bash
+pacman -S mingw-w64-ucrt-x86_64-raylib
+```
+
+Compile:
+
+```bash
+gcc src/*.c -o chess.exe \
+-lraylib \
+-lopengl32 \
+-lgdi32 \
+-lwinmm
+```
+
+Run:
+
+```bash
+./chess.exe
+```
 
 </details>
 
@@ -176,17 +279,16 @@ A few things about the implementation that felt worth calling out:
 
 ```
 Core Mechanics        ████████████████████  complete
-  (bitboards, move gen, captures, check,
-   castling, en passant, promotion)
+(bitboards, move generation, captures,
+check, castling, en passant,
+promotion, checkmate, stalemate)
 
-Game End Conditions    ░░░░░░░░░░░░░░░░░░░░  not started
-  (checkmate, stalemate, draw rules)
+Game End Conditions   ███████████████░░░░  mostly complete
+(draw rules remaining)
 
-Notation Support       ░░░░░░░░░░░░░░░░░░░░  not started
-  (FEN, PGN)
+Notation Support      ░░░░░░░░░░░░░░░░░░░░  not started
 
-Engine / AI            ░░░░░░░░░░░░░░░░░░░░  not started
-  (minimax, alpha-beta, evaluation)
+Engine / AI           ░░░░░░░░░░░░░░░░░░░░  not started
 ```
 
 The bars above reflect implementation status, not code quality or effort — core mechanics being "complete" means the listed rules work, not that the engine is finished.
