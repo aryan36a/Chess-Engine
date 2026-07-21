@@ -2,6 +2,7 @@
 #include<raylib.h>
 #include<stdlib.h>
 
+#include"evaluate.h"
 #include "board.h"
 #include "input.h"
 
@@ -40,6 +41,9 @@ void HandleMouseInput(Vector2 mouse){
                 promotionMenu.pawn=BLACK_PAWN;
             }else{
                 toggleTurn();
+
+                //printf("Evaluation: %d\n",evaluate());
+                board.positionHistory[board.historyCount++] = generateHash();
                 detectCheckAndStaleMate();
             }
         }
@@ -119,6 +123,8 @@ void HandlePromotionClick(Vector2 mouse){
     promotionMenu.active=false;
 
     toggleTurn();
+    
+    //printf("%d\n", evaluate());
     detectCheckAndStaleMate();
     board.positionHistory[board.historyCount++]=generateHash();
 

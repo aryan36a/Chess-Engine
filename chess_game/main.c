@@ -6,6 +6,8 @@
 #include "texture.h"
 #include "input.h"
 #include "fen.h"
+#include "evaluate.h"
+#include "search.h"
 
 #define BOARD_SIZE 8
 #define TILE_SIZE 128
@@ -29,6 +31,15 @@ int main(void){
 
     initBoard(); //Only comment/disable if you are using FEN generator
     //loadFEN(""); //Enter your customer FEN here for testing purposes
+
+    //Testing shit here
+    Move list[256];
+    printf("white: %d\n",generateAllMoves(true,list));
+    printf("Black: %d\n", generateAllMoves(false, list));
+    printf("%d\n", evaluate());
+    Move best = findBestMove(3);
+
+    printf("Best Move: %d -> %d\n", best.from, best.to);
     
     //Hover Colour
     Color hover=(Color){144,238,144,150};

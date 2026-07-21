@@ -5,7 +5,7 @@
 
 Board board;
 
-Move moves[32];
+Move moves[256];
 
 int moveCount=0;
 int selectedSquare=-1;
@@ -15,7 +15,9 @@ Turn currentTurn=WHITE_TURN;
 
 PromotionMenu promotionMenu={false,-1,EMPTY};
 
-static Board temporaryBoard;
+#define MAX_PLY 128
+static Board boardStack[MAX_PLY];
+static int boardTop=0;
 
 //zorbist hashing
 static uint64_t zobristPieces[12][64];
@@ -221,7 +223,7 @@ uint64_t generateHash(void){
     hash^=zobristCastle[castleRights];
 
     //En Passant
-    if(board.enPassantSquare){
+    if(board.enPassantSquare!=-1){
         int file=board.enPassantSquare%8;
         hash^=zobristEnPassant[file];
     }
@@ -237,7 +239,7 @@ bool isThreeFoldRepetition(void){
     uint64_t currentHash=generateHash();
     int count=0;
     for(int i=0;i<board.historyCount;i++){
-        if(board.positionHistory[i]=currentHash){
+        if(board.positionHistory[i]==currentHash){
             count++;
         }
         if(count>3){
@@ -319,9 +321,11 @@ void generateStraightMoves(int square,const int rowDir[],const int colDir[],int 
     
     int row=square/8;
     int col=square%8;
+    Piece piece = GetPieceAtSquare(square);
+    bool white = isWhitePiece(piece);
     uint64_t friendlyPieces;
     uint64_t enemyPieces;
-    if(selectedPiece<=WHITE_KING){
+    if(white){
         friendlyPieces=board.whitePieces;
         enemyPieces=board.blackPieces;
     }else{
@@ -521,6 +525,8 @@ void generateKnightMoves(int square){
 
     int row=square/8;
     int col=square%8;
+    Piece piece = GetPieceAtSquare(square);
+    bool white = isWhitePiece(piece);
 
     for(int i=0;i<8;i++){
         int newRow=row+kinghtRowOffset[i];
@@ -531,7 +537,7 @@ void generateKnightMoves(int square){
         }
         int destination=newRow*8+newCol;
         
-        if(selectedPiece==WHITE_KNIGHT){
+        if(white){
             if(isBitSet(board.whitePieces,destination)){
                 continue;
             }
@@ -573,8 +579,8 @@ void generateQueenMoves(int square){
 
 //King Moves
 //Castling
-void generateCastlingMoves(void){
-    if(selectedPiece==WHITE_KING){
+void generateCastlingMoves(bool white){
+    if(white){
         if(!board.whiteKingMoved&&!board.whiteKingsideRookMoved&&isBitSet(board.whiteRooks,63)&&!isBitSet(board.occupied,61)
             &&!isBitSet(board.occupied,62)&&!isSquareAttacked(60,false)&&!isSquareAttacked(61,false)&&!isSquareAttacked(62,false)){
             moves[moveCount].from=60;
@@ -589,7 +595,7 @@ void generateCastlingMoves(void){
         }
     }
     
-    if(selectedPiece==BLACK_KING){
+    if(!white){
         if(!board.blackKingMoved&&!board.blackKingsideRookMoved&&isBitSet(board.blackRooks,7)&&!isBitSet(board.occupied,5)
             &&!isBitSet(board.occupied,6)&&!isSquareAttacked(4,true)&&!isSquareAttacked(5,true)&&!isSquareAttacked(6,true)){
             moves[moveCount].from=4;
@@ -612,9 +618,11 @@ void generateKingMoves(int square){
     const int colDir[8]={0,0,-1,1,-1,1,-1,1};
     int row=square/8;
     int col=square%8;
+    Piece piece = GetPieceAtSquare(square);
+    bool white = isWhitePiece(piece);
     
     uint64_t friendlyPieces;
-    if(selectedPiece<=WHITE_KING){
+    if(white){
         friendlyPieces=board.whitePieces;
     }else{
         friendlyPieces=board.blackPieces;
@@ -635,7 +643,7 @@ void generateKingMoves(int square){
         moves[moveCount].to=destination;
         moveCount++;
     }
-    generateCastlingMoves();
+    generateCastlingMoves(white);
 
     filterLegalMoves();
 }
@@ -683,7 +691,7 @@ void makeMove(Move move){
     if((movingPiece==WHITE_PAWN||movingPiece==BLACK_PAWN)&&move.to==board.enPassantSquare&&move.from%8!=move.to%8){
         isCapture=true;
     }
-    if(selectedPiece==BLACK_PAWN||selectedPiece==WHITE_PAWN||isCapture){
+    if(movingPiece==BLACK_PAWN||movingPiece==WHITE_PAWN||isCapture){
         board.halfMoveClock=0;
     }else{
         board.halfMoveClock++;
@@ -788,7 +796,7 @@ void makeMove(Move move){
 void makeTemporaryMove(Move move, Piece *capturedPiece){
     Piece movingPiece=GetPieceAtSquare(move.from);
 
-    temporaryBoard=board;
+    boardStack[boardTop++]=board;
 
     if(capturedPiece!=NULL){
         if((movingPiece==WHITE_PAWN||movingPiece==BLACK_PAWN)&&move.to==board.enPassantSquare&&move.from%8!=move.to%8){
@@ -808,7 +816,7 @@ void makeTemporaryMove(Move move, Piece *capturedPiece){
 void undoTemporaryMove(Move move, Piece capturedPiece){
     (void)move;
     (void)capturedPiece;
-    board=temporaryBoard;
+    board=boardStack[--boardTop];
 }
 
 bool leavesKingInCheck(Move move){
@@ -945,8 +953,6 @@ bool isKingInCheck(bool white){
 void generateMoves(int square){
     Piece piece = GetPieceAtSquare(square);
 
-    selectedPiece = piece;
-
     switch(piece){
 
         case WHITE_PAWN:
@@ -988,7 +994,6 @@ void generateMoves(int square){
 }
 
 bool hasLegalMoves(bool white){
-    Piece oldSelected=selectedPiece;
 
     for(int square=0;square<64;square++){
         Piece piece=GetPieceAtSquare(square);
@@ -996,24 +1001,22 @@ bool hasLegalMoves(bool white){
         if(piece==EMPTY){
             continue;
         }
-
-        if(white !=isWhitePiece(piece)){
+        if(white != isWhitePiece(piece)){
             continue;
         }
         generateMoves(square);
 
         if(moveCount>0){
-            selectedPiece=oldSelected;
             return true;
         }
     }
-    selectedPiece=oldSelected;
+
     return false;
 }
 
 
 //Counter helper function
-static int countPieces(uint64_t bitboard){
+int countPieces(uint64_t bitboard){
     int count=0;
 
     while(bitboard){
@@ -1095,4 +1098,24 @@ bool isStaleMate(bool white){
 //50 move rule
 bool isFiftyMove(void){
     return board.halfMoveClock>=100;
+}
+
+//Engine shit
+int generateAllMoves(bool white, Move moveList[]){
+    int total=0;
+    for(int square=0;square<64;square++){
+        Piece piece=GetPieceAtSquare(square);
+        if(piece==EMPTY){
+            continue;
+        }
+        if(white!=isWhitePiece(piece)){
+            continue;
+        }
+        generateMoves(square);
+
+        for(int i=0;i<moveCount;i++){
+            moveList[total++]=moves[i];
+        }
+    }
+    return total;
 }

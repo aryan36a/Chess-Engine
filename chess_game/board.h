@@ -93,7 +93,7 @@ extern PromotionMenu promotionMenu;
 //Global Variables
 extern Board board;
 
-extern Move moves[32];
+extern Move moves[256];
 
 extern int moveCount;
 extern int selectedSquare;
@@ -155,5 +155,11 @@ bool leavesKingInCheck(Move move);
 void makeTemporaryMove(Move move, Piece *capturedPiece);
 void undoTemporaryMove(Move move, Piece capturedPiece);
 void filterLegalMoves(void);
+
+
+//Engine Shit
+int generateAllMoves(bool white,Move moveList[]);
+int countPieces(uint64_t bitboard);
+
 
 #endif
