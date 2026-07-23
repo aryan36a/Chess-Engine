@@ -124,6 +124,7 @@ bool isBlackPiece(Piece piece);
 void toggleTurn(void);
 
 void promotePawn(int square,Piece promotedPiece);
+void finalizePromotionIfNeeded(Move move);
 
 void makeMove(Move move);
 

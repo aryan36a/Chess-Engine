@@ -152,15 +152,17 @@ void makeComputerMove(void){
     if(currentTurn!=BLACK_TURN){
         return;
     }
-    Move best=findBestMove(5);
+    Move best=findBestMove(6);
+
+    if(best.from<0 || best.to<0){
+        return;
+    }
 
     printf("Computer plays:%d -> %d\n",best.from,best.to);
 
     makeMove(best);
 
-    if(GetPieceAtSquare(best.to)==BLACK_PAWN&&best.to>=56){
-        promotePawn(best.to,BLACK_QUEEN);
-    }
+    finalizePromotionIfNeeded(best);
     toggleTurn();
     board.positionHistory[board.historyCount++]=generateHash();
     detectCheckAndStaleMate();

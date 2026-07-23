@@ -398,6 +398,16 @@ void promotePawn(int square, Piece promotedPiece){
     updateOccupancy();
 }
 
+void finalizePromotionIfNeeded(Move move){
+    Piece promotedPiece=GetPieceAtSquare(move.to);
+
+    if(promotedPiece==WHITE_PAWN && move.to<8){
+        promotePawn(move.to,WHITE_QUEEN);
+    }else if(promotedPiece==BLACK_PAWN && move.to>=56){
+        promotePawn(move.to,BLACK_QUEEN);
+    }
+}
+
 //White Pawn Moves
 void generateWhitePawnMoves(int square){
     int file=square%8;
@@ -811,6 +821,7 @@ void makeTemporaryMove(Move move, Piece *capturedPiece){
     }
 
     makeMove(move);
+    finalizePromotionIfNeeded(move);
 }
 
 void undoTemporaryMove(Move move, Piece capturedPiece){
@@ -936,6 +947,9 @@ bool isKingInCheck(bool white){
                 break;
             }
         }
+        if(kingSquare==-1){
+            return true;
+        }
         return isSquareAttacked(kingSquare,false);
     }else{
         for(int i=0;i<64;i++){
@@ -944,6 +958,9 @@ bool isKingInCheck(bool white){
                 kingSquare=i;
                 break;
             }
+        }
+        if(kingSquare==-1){
+            return true;
         }
         return isSquareAttacked(kingSquare,true);
     }
