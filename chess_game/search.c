@@ -4,9 +4,13 @@
 
 static Move bestMove;
 static int rootDepth;
+static long long counter=0;
 
 int negamax(int depth, int alpha, int beta){
+    counter++;
+    
     if(depth==0){
+
         int score=evaluate();
         return (currentTurn==WHITE_TURN)?score:-score;
     }
@@ -29,8 +33,6 @@ int negamax(int depth, int alpha, int beta){
 
         toggleTurn();
         int score=-negamax(depth-1,-beta,-alpha);
-        printf("%d -> %d : %d\n",
-        moveList[i].from,moveList[i].to,score);
         
         toggleTurn();
         undoTemporaryMove(moveList[i],capturedPiece);
@@ -54,7 +56,11 @@ int negamax(int depth, int alpha, int beta){
 }
 
 Move findBestMove(int depth){
+    bestMove.from=-1;
+    bestMove.to=-1;
     rootDepth=depth;
+    counter=0;
     negamax(depth,-INF,INF);
+    printf("Leaf Evaluations:%lld\n",counter);
     return bestMove;
 }

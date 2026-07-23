@@ -29,17 +29,18 @@ int main(void){
     //Init zorbist
     initZobrist();
 
-    initBoard(); //Only comment/disable if you are using FEN generator
-    //loadFEN(""); //Enter your customer FEN here for testing purposes
+    initBoard(); //Only comment/disable if you are using FEN generator (Note: Game wont load if you comment this without a fen)
+    //loadFEN(""); //Enter your custom FEN here for testing purposes
 
     //Testing shit here
     Move list[256];
-    printf("white: %d\n",generateAllMoves(true,list));
-    printf("Black: %d\n", generateAllMoves(false, list));
-    printf("%d\n", evaluate());
-    Move best = findBestMove(3);
+    //printf("white: %d\n",generateAllMoves(true,list));
+    //printf("Black: %d\n", generateAllMoves(false, list));
+    //printf("Evaluation = %d\n", evaluate());
+    //Move best = findBestMove(6);//Change Depth for search here
 
-    printf("Best Move: %d -> %d\n", best.from, best.to);
+
+    //printf("Best Move: %d -> %d\n", best.from, best.to);
     
     //Hover Colour
     Color hover=(Color){144,238,144,150};

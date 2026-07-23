@@ -10,7 +10,7 @@ void initZobrist(void);
 
 uint64_t generateHash(void);
 
-bool isThreefoldRepetition(void);
+bool isThreeFoldRepetition(void);
 
 //Enums
 typedef enum{

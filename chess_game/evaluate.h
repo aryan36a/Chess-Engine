@@ -2,5 +2,6 @@
  #define EVALUATE_H
 
 int evaluate(void);
+void printEvaluationBreakdown(void);
 
  #endif

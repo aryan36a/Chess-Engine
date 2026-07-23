@@ -5,11 +5,13 @@
 #include"evaluate.h"
 #include "board.h"
 #include "input.h"
+#include "search.h"
 
 #define TILE_SIZE 128
 
 void toggleTurn(void);
 void detectCheckAndStaleMate(void);
+void makeComputerMove(void);
 
 
 void HandleMouseInput(Vector2 mouse){
@@ -45,6 +47,7 @@ void HandleMouseInput(Vector2 mouse){
                 //printf("Evaluation: %d\n",evaluate());
                 board.positionHistory[board.historyCount++] = generateHash();
                 detectCheckAndStaleMate();
+                makeComputerMove();
             }
         }
 
@@ -63,22 +66,12 @@ void HandleMouseInput(Vector2 mouse){
             return;
         }
 
-        if(currentTurn==WHITE_TURN && isBlackPiece(piece)){
+        if(isBlackPiece(piece)){
             selectedSquare=-1;
             selectedPiece=EMPTY;
             moveCount=0;
-            printf("Wrong Colour\n");
             return;
         }
-
-        if(currentTurn==BLACK_TURN && isWhitePiece(piece)){
-            selectedSquare=-1;
-            selectedPiece=EMPTY;
-            moveCount=0;
-            printf("Wrong Colour\n");
-            return;
-        }
-
         selectedSquare=clickedSquare;
         selectedPiece=piece;
         generateMoves(selectedSquare);
@@ -127,6 +120,7 @@ void HandlePromotionClick(Vector2 mouse){
     //printf("%d\n", evaluate());
     detectCheckAndStaleMate();
     board.positionHistory[board.historyCount++]=generateHash();
+    makeComputerMove();
 
     selectedSquare=-1;
     selectedPiece=EMPTY;
@@ -150,4 +144,24 @@ void detectCheckAndStaleMate(void){
     }else if(isThreeFoldRepetition()){
         printf("Draw by three fold repetition\n");
     }
+}
+
+//Computer input
+//Computer Moves
+void makeComputerMove(void){
+    if(currentTurn!=BLACK_TURN){
+        return;
+    }
+    Move best=findBestMove(5);
+
+    printf("Computer plays:%d -> %d\n",best.from,best.to);
+
+    makeMove(best);
+
+    if(GetPieceAtSquare(best.to)==BLACK_PAWN&&best.to>=56){
+        promotePawn(best.to,BLACK_QUEEN);
+    }
+    toggleTurn();
+    board.positionHistory[board.historyCount++]=generateHash();
+    detectCheckAndStaleMate();
 }
