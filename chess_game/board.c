@@ -197,13 +197,13 @@ uint64_t generateHash(void){
         Piece piece=GetPieceAtSquare(square);
 
         if(piece!=EMPTY){
-            hash^=zobristPieces[piece][square];
+            hash^=zobristPieces[piece-1][square];
         }
     }
 
     //Turn
     if(currentTurn==BLACK_TURN){
-        hash^zobristSide;
+        hash^=zobristSide;
     }
 
     //Castling
@@ -806,6 +806,10 @@ void makeMove(Move move){
 void makeTemporaryMove(Move move, Piece *capturedPiece){
     Piece movingPiece=GetPieceAtSquare(move.from);
 
+    if(boardTop>=MAX_PLY){
+        printf("Error: boardStack Overflow.\n");
+        exit(EXIT_FAILURE);
+    }
     boardStack[boardTop++]=board;
 
     if(capturedPiece!=NULL){
@@ -827,6 +831,12 @@ void makeTemporaryMove(Move move, Piece *capturedPiece){
 void undoTemporaryMove(Move move, Piece capturedPiece){
     (void)move;
     (void)capturedPiece;
+    
+    if(boardTop>=MAX_PLY){
+        printf("Error: boardStack Overflow.\n");
+        exit(EXIT_FAILURE);
+    }
+    
     board=boardStack[--boardTop];
 }
 

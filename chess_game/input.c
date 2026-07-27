@@ -152,7 +152,7 @@ void makeComputerMove(void){
     if(currentTurn!=BLACK_TURN){
         return;
     }
-    Move best=findBestMove(6);
+    Move best=findBestMove(5);
 
     if(best.from<0 || best.to<0){
         return;
