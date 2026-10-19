@@ -8,6 +8,7 @@
 
 void HandleMouseInput(Vector2 mouse);
 void SetEngineDepth(int depth);
+void SetPlayerColor(bool humanPlaysWhite);
 
 void HandlePromotionClick(Vector2 mouse);
 void UpdateComputerSearch(void);
