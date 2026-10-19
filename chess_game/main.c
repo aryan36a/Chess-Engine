@@ -127,6 +127,8 @@ int main(int argc, char **argv){
         for(int col=0;col<BOARD_SIZE;col++){
             for(int row=0;row<BOARD_SIZE;row++){
 
+                int boardRow = IsBoardFlipped() ? 7 - row : row;
+                int boardCol = IsBoardFlipped() ? 7 - col : col;
                 Rectangle square={
                     col*TILE_SIZE,
                     row*TILE_SIZE,
@@ -154,8 +156,8 @@ int main(int argc, char **argv){
         //Display Selected Square
         if(selectedSquare!=-1){
 
-            int row=selectedSquare/8;
-            int col=selectedSquare%8;
+            int row=BoardDisplayRow(selectedSquare);
+            int col=BoardDisplayCol(selectedSquare);
 
             DrawRectangle(
                 col*TILE_SIZE,
@@ -177,8 +179,8 @@ int main(int argc, char **argv){
         // does not mean the user has selected a piece.
         if(selectedSquare!=-1){
             for(int i=0;i<moveCount;i++){
-                int row=moves[i].to/8;
-                int col=moves[i].to%8;
+                int row=BoardDisplayRow(moves[i].to);
+                int col=BoardDisplayCol(moves[i].to);
 
                 DrawCircle(
                     col*TILE_SIZE+TILE_SIZE/2,
@@ -221,8 +223,8 @@ void DrawCheckHighlight(void){
             }
         }
         if(kingSquare!=-1){
-            int row=kingSquare/8;
-            int col=kingSquare%8;
+            int row=BoardDisplayRow(kingSquare);
+            int col=BoardDisplayCol(kingSquare);
             DrawRectangle(
                 col*TILE_SIZE,
                 row*TILE_SIZE,
