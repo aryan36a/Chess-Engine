@@ -33,7 +33,11 @@ int negamax(int depth, int alpha, int beta){
         makeTemporaryMove(moveList[i],&capturedPiece);
 
         toggleTurn();
-        int score=-negamax(depth-1,-beta,-alpha);
+        // Root candidates need exact scores for a meaningful chaos tie-break.
+        // Internal nodes still use the normal alpha-beta window.
+        int score=(depth==rootDepth)
+            ? -negamax(depth-1,-INF,INF)
+            : -negamax(depth-1,-beta,-alpha);
 
         // Measure the position after each candidate root move, while its
         // board state is still active. Chaos is only a root-level tie-breaker.
