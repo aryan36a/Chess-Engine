@@ -37,6 +37,7 @@ void SetEngineDepth(int depth){
 
 void SetPlayerColor(bool playWhite){
     humanPlaysWhite = playWhite;
+    SetBoardFlipped(!playWhite);
     snprintf(gameStatus, sizeof(gameStatus), "Your turn - %s", playWhite ? "White" : "Black");
     if(currentTurn != (humanPlaysWhite ? WHITE_TURN : BLACK_TURN)){
         startComputerSearch();
@@ -110,7 +111,8 @@ void HandleMouseInput(Vector2 mouse){
     int sRow=mouse.y/TILE_SIZE;
     int sCol=mouse.x/TILE_SIZE;
 
-    int clickedSquare=sRow*8+sCol;
+    if(sRow < 0 || sRow >= 8 || sCol < 0 || sCol >= 8){ return; }
+    int clickedSquare = IsBoardFlipped() ? (7 - sRow) * 8 + (7 - sCol) : sRow * 8 + sCol;
 
     if(selectedSquare!=-1){
 

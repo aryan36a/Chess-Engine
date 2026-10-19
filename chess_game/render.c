@@ -18,7 +18,7 @@ void DrawBoardPieces(void){
             int square=row*8+col;
             Piece piece=GetPieceAtSquare(square);
             if(piece!=EMPTY){
-                DrawPiece(piece,row,col);
+                DrawPiece(piece,BoardDisplayRow(square),BoardDisplayCol(square));
             }
         }
     }
@@ -80,9 +80,9 @@ void DrawLastMoveHighlight(Move move){
     }
     const Color fromColor = (Color){70, 170, 190, 105};
     const Color toColor = (Color){245, 210, 65, 125};
-    DrawRectangle((move.from % 8) * TILE_SIZE, (move.from / 8) * TILE_SIZE,
+    DrawRectangle(BoardDisplayCol(move.from) * TILE_SIZE, BoardDisplayRow(move.from) * TILE_SIZE,
                   TILE_SIZE, TILE_SIZE, fromColor);
-    DrawRectangle((move.to % 8) * TILE_SIZE, (move.to / 8) * TILE_SIZE,
+    DrawRectangle(BoardDisplayCol(move.to) * TILE_SIZE, BoardDisplayRow(move.to) * TILE_SIZE,
                   TILE_SIZE, TILE_SIZE, toColor);
 }
 
