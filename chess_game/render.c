@@ -123,86 +123,49 @@ void DrawEvaluationSidebar(int whiteScore, const Piece capturedByWhite[],
                            int whiteCount, const Piece capturedByBlack[],
                            int blackCount, const char *status, bool thinking,
                            unsigned long long nodes){
-    const int x = BOARD_SIZE * TILE_SIZE;
-    const int panelWidth = SIDEBAR_WIDTH;
-    const Color panel = (Color){29, 32, 39, 255};
-    const Color card = (Color){41, 45, 54, 255};
-    const Color muted = (Color){158, 167, 181, 255};
-    const Color text = (Color){239, 242, 247, 255};
-    const int barX = x + 18;
-    const int barY = 244;
-    const int barW = 24;
-    const int barH = 300;
+    const int x=BOARD_SIZE*TILE_SIZE, w=SIDEBAR_WIDTH, h=BOARD_SIZE*TILE_SIZE;
+    const Color panel=(Color){25,28,35,255}, card=(Color){39,44,53,255};
+    const Color muted=(Color){155,165,180,255}, bright=(Color){239,242,247,255};
+    const Color line=(Color){58,64,76,255};
+    DrawRectangle(x,0,w,h,panel);
+    DrawRectangle(x,0,w,5,(Color){110,168,255,255});
+    DrawText("CHESS / ANALYSIS",x+20,22,13,muted);
+    DrawText("Position review",x+20,46,25,bright);
+    DrawLine(x+20,82,x+w-20,82,line);
 
-    DrawRectangle(x, 0, panelWidth, BOARD_SIZE * TILE_SIZE, panel);
-    DrawRectangle(x, 0, panelWidth, 5, (Color){110, 168, 255, 255});
-    DrawText("YOUR GAME", x + 18, 22, 13, muted);
-    DrawText("Position review", x + 18, 43, 22, text);
-    DrawLine(x + 18, 78, x + panelWidth - 18, 78, (Color){62, 68, 80, 255});
+    Color statusColor=thinking?(Color){92,158,239,255}:
+        (status&&(strstr(status,"CHECKMATE")||strstr(status,"CHECK")))?(Color){220,91,91,255}:
+        (status&&strstr(status,"DRAW"))?(Color){218,174,78,255}:(Color){77,181,132,255};
+    DrawRectangleRounded((Rectangle){x+18,98,w-36,58},0.12f,8,card);
+    DrawCircle(x+36,119,5,statusColor);
+    DrawText(thinking?"Engine thinking":(status?status:"Ready to play"),x+50,109,16,bright);
+    DrawText(thinking?"Searching positions...":"You play White against the engine",x+30,133,12,muted);
 
-    Color statusColor = thinking ? (Color){67, 133, 215, 255}
-                      : (status && (strstr(status, "CHECKMATE") || strstr(status, "CHECK")))
-                          ? (Color){176, 65, 70, 255}
-                      : (status && strstr(status, "DRAW"))
-                          ? (Color){163, 123, 48, 255}
-                          : (Color){52, 128, 94, 255};
-    DrawRectangleRounded((Rectangle){x + 16, 92, panelWidth - 32, 54},
-                         0.18f, 8, card);
-    DrawCircle(x + 31, 119, 5, statusColor);
-    const char *statusText = (thinking ? "Engine is thinking..." :
-                              (status ? status : "Ready to play"));
-    DrawText(statusText, x + 44, 108, 15, text);
-    if(thinking){
-        DrawText("Searching candidate moves", x + 18, 155, 13, muted);
-    }else if(status && strstr(status, "CHECKMATE")){
-        DrawText("Game over", x + 18, 155, 13, muted);
-    }else if(status && strstr(status, "CHECK")){
-        DrawText("King in danger - respond carefully", x + 18, 155, 13, muted);
-    }else if(status && strstr(status, "DRAW")){
-        DrawText("The game has ended in a draw", x + 18, 155, 13, muted);
-    }else{
-        DrawText("You play White against the engine", x + 18, 155, 13, muted);
-    }
+    DrawRectangleRounded((Rectangle){x+18,170,w-36,58},0.12f,8,card);
+    DrawText("NODES SEARCHED",x+30,180,11,muted);
+    char nodeText[32]; FormatNodeCount(nodes,nodeText,sizeof(nodeText));
+    DrawText(nodeText,x+w-30-MeasureText(nodeText,24),195,24,bright);
+    DrawText(thinking?"Live search count":"Latest engine search",x+30,204,11,muted);
 
-    DrawRectangleRounded((Rectangle){x + 16, 180, panelWidth - 32, 48},
-                         0.14f, 8, card);
-    char nodeText[32];
-    FormatNodeCount(nodes, nodeText, sizeof(nodeText));
-    DrawText("AI predictions", x + 28, 188, 14, muted);
-    DrawText(nodeText, x + panelWidth - 92, 185, 22, text);
-    DrawText(thinking ? "positions searched - live" : "nodes in latest search",
-             x + 28, 207, 11, muted);
+    DrawText("EVALUATION",x+20,250,12,muted);
+    char scoreText[32]; snprintf(scoreText,sizeof(scoreText),"%+.2f",whiteScore/100.0);
+    DrawText(scoreText,x+20,272,34,bright);
+    DrawText(whiteScore>35?"White is better":whiteScore< -35?"Black is better":"Position is roughly equal",x+20,312,14,muted);
 
-    DrawText("EVALUATION", x + 18, 238, 12, muted);
-    float whiteShare = 0.5f + (float)whiteScore / 2000.0f;
-    if(whiteShare < 0.03f) whiteShare = 0.03f;
-    if(whiteShare > 0.97f) whiteShare = 0.97f;
-    int whiteHeight = (int)(barH * whiteShare);
-    DrawRectangleRounded((Rectangle){barX, barY, barW, barH}, 0.18f, 8,
-                         (Color){78, 84, 96, 255});
-    DrawRectangle(barX, barY + barH - whiteHeight, barW, whiteHeight,
-                  (Color){232, 235, 241, 255});
-    DrawRectangleLinesEx((Rectangle){barX, barY, barW, barH}, 1,
-                         (Color){101, 109, 123, 255});
+    const int bx=x+20, by=348, bw=w-40, bh=18;
+    float share=0.5f+(float)whiteScore/2000.0f;
+    if(share<0.03f) share=0.03f; if(share>0.97f) share=0.97f;
+    DrawRectangleRounded((Rectangle){bx,by,bw,bh},0.25f,8,(Color){73,80,93,255});
+    DrawRectangleRounded((Rectangle){bx,by,bw*share,bh},0.25f,8,(Color){232,235,241,255});
+    DrawText("BLACK",bx,by+28,11,muted);
+    DrawText("WHITE",bx+bw-MeasureText("WHITE",11),by+28,11,muted);
+    DrawLine(x+20,410,x+w-20,410,line);
 
-    char scoreText[32];
-    if(whiteScore > 0){
-        snprintf(scoreText, sizeof(scoreText), "+%.2f", whiteScore / 100.0);
-    }else if(whiteScore < 0){
-        snprintf(scoreText, sizeof(scoreText), "%.2f", whiteScore / 100.0);
-    }else{
-        snprintf(scoreText, sizeof(scoreText), "0.00");
-    }
-    DrawText(scoreText, x + 58, 270, 31, text);
-    DrawText("White's advantage", x + 58, 306, 14, muted);
-    DrawText("BLACK", x + 58, 363, 12, muted);
-    DrawText("WHITE", x + 58, 513, 12, muted);
-    DrawText("Evaluation is in pawns", x + 58, 543, 12, muted);
-
-    DrawLine(x + 18, 576, x + panelWidth - 18, 576, (Color){62, 68, 80, 255});
-    DrawText("CAPTURED PIECES", x + 18, 593, 12, muted);
-    DrawCapturedPieceRow("Taken by you", capturedByWhite, whiteCount,
-                         x + 18, 616, panelWidth - 36);
-    DrawCapturedPieceRow("Taken by engine", capturedByBlack, blackCount,
-                         x + 18, 785, panelWidth - 36);
+    DrawText("CAPTURED PIECES",x+20,428,12,muted);
+    DrawText("Taken by you",x+20,455,15,bright);
+    DrawCapturedPieceRow("",capturedByWhite,whiteCount,x+20,478,w-40);
+    DrawLine(x+20,590,x+w-20,590,line);
+    DrawText("Taken by engine",x+20,610,15,bright);
+    DrawCapturedPieceRow("",capturedByBlack,blackCount,x+20,633,w-40);
+    DrawText("DEPTH LOCKED FOR THIS GAME",x+20,h-44,11,muted);
 }
