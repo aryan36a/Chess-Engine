@@ -232,7 +232,10 @@ uint64_t generateHash(void){
 }
 
 bool isBitSet(uint64_t bitboard, int square){
-    return (bitboard&(1ULL<<square))!=0;
+    if(square < 0 || square >= 64){
+        return false;
+    }
+    return (bitboard & (1ULL << square)) != 0;
 }
 
 bool isThreeFoldRepetition(void){
@@ -268,8 +271,13 @@ Piece GetPieceAtSquare(int square)
 }
 
 bool isLegalMove(int square){
-    for(int i=0;i<moveCount;i++){
-        if(moves[i].to==square){
+    if(square < 0 || square >= 64 ||
+       selectedSquare < 0 || selectedSquare >= 64){
+        return false;
+    }
+
+    for(int i = 0; i < moveCount; i++){
+        if(moves[i].from == selectedSquare && moves[i].to == square){
             return true;
         }
     }
@@ -434,12 +442,12 @@ void generateWhitePawnMoves(int square){
     }
 
     if(board.enPassantSquare!=-1){
-        if(square-9==board.enPassantSquare){
+        if(file > 0 && square - 9 == board.enPassantSquare){
             moves[moveCount].from=square;
             moves[moveCount].to=board.enPassantSquare;
             moveCount++;
         }
-        if(square-7==board.enPassantSquare){
+        if(file < 7 && square - 7 == board.enPassantSquare){
             moves[moveCount].from=square;
             moves[moveCount].to=board.enPassantSquare;
             moveCount++;
@@ -472,20 +480,20 @@ void generateBlackPawnMoves(int square){
     int file=square%8;
     moveCount=0;
 
-    if(file>0){
-        int captureLeft=square+9;
+    if(file > 0){
+        int captureLeft = square + 7;
 
-        if(captureLeft>=0 && isBitSet(board.whitePieces,captureLeft)){
+        if(captureLeft < 64 && isBitSet(board.whitePieces, captureLeft)){
             moves[moveCount].from=square;
             moves[moveCount].to=captureLeft;
             moveCount++;
         }
     }
 
-    if(file<7){
-        int captureRight=square+7;
+    if(file < 7){
+        int captureRight = square + 9;
 
-        if(captureRight>=0 && isBitSet(board.whitePieces,captureRight)){
+        if(captureRight < 64 && isBitSet(board.whitePieces, captureRight)){
             moves[moveCount].from=square;
             moves[moveCount].to=captureRight;
             moveCount++;
@@ -493,12 +501,12 @@ void generateBlackPawnMoves(int square){
     }
 
     if(board.enPassantSquare!=-1){
-        if(square+9==board.enPassantSquare){
+        if(file > 0 && square + 7 == board.enPassantSquare){
             moves[moveCount].from=square;
             moves[moveCount].to=board.enPassantSquare;
             moveCount++;
         }
-        if(square+7==board.enPassantSquare){
+        if(file < 7 && square + 9 == board.enPassantSquare){
             moves[moveCount].from=square;
             moves[moveCount].to=board.enPassantSquare;
             moveCount++;
@@ -506,7 +514,7 @@ void generateBlackPawnMoves(int square){
     }
 
     int oneStep=square+8;
-    if(oneStep >=0 && !isBitSet(board.occupied,oneStep)){
+    if(oneStep < 64 && !isBitSet(board.occupied,oneStep)){
         moves[moveCount].from=square;
         moves[moveCount].to=oneStep;
         moveCount++;
@@ -653,7 +661,9 @@ void generateKingMoves(int square){
         moves[moveCount].to=destination;
         moveCount++;
     }
-    generateCastlingMoves(white);
+    if((white && square == 60) || (!white && square == 4)){
+        generateCastlingMoves(white);
+    }
 
     filterLegalMoves();
 }
