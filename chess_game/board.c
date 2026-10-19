@@ -3,27 +3,27 @@
 #include "board.h"
 #include "attacks.h"
 
-Board board;
+_Thread_local Board board;
 
-Move moves[256];
+_Thread_local Move moves[256];
 
-int moveCount=0;
-int selectedSquare=-1;
-Piece selectedPiece=EMPTY;
+_Thread_local int moveCount=0;
+_Thread_local int selectedSquare=-1;
+_Thread_local Piece selectedPiece=EMPTY;
 
-Turn currentTurn=WHITE_TURN;
+_Thread_local Turn currentTurn=WHITE_TURN;
 
-PromotionMenu promotionMenu={false,-1,EMPTY};
+_Thread_local PromotionMenu promotionMenu={false,-1,EMPTY};
 
 #define MAX_PLY 128
-static Board boardStack[MAX_PLY];
-static int boardTop=0;
+static _Thread_local Board boardStack[MAX_PLY];
+static _Thread_local int boardTop=0;
 
 //zorbist hashing
-static uint64_t zobristPieces[12][64];
-static uint64_t zobristSide;
-static uint64_t zobristCastle[16];
-static uint64_t zobristEnPassant[8];
+static _Thread_local uint64_t zobristPieces[12][64];
+static _Thread_local uint64_t zobristSide;
+static _Thread_local uint64_t zobristCastle[16];
+static _Thread_local uint64_t zobristEnPassant[8];
 
 
 
