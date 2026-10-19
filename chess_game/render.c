@@ -173,12 +173,12 @@ void DrawEvaluationSidebar(int whiteScore, const Piece capturedByWhite[],
     DrawText(statusText, x + 44, 108, 15, text);
     if(thinking){
         DrawText("Searching candidate moves", x + 18, 155, 13, muted);
+    }else if(status && strstr(status, "CHECKMATE")){
+        DrawText("Game over", x + 18, 155, 13, muted);
     }else if(status && strstr(status, "CHECK")){
         DrawText("King in danger - respond carefully", x + 18, 155, 13, muted);
     }else if(status && strstr(status, "DRAW")){
         DrawText("The game has ended in a draw", x + 18, 155, 13, muted);
-    }else if(status && strstr(status, "CHECKMATE")){
-        DrawText("Game over", x + 18, 155, 13, muted);
     }else{
         DrawText("You play White against the engine", x + 18, 155, 13, muted);
     }
@@ -189,7 +189,7 @@ void DrawEvaluationSidebar(int whiteScore, const Piece capturedByWhite[],
     FormatNodeCount(nodes, nodeText, sizeof(nodeText));
     DrawText("AI predictions", x + 28, 188, 14, muted);
     DrawText(nodeText, x + panelWidth - 92, 185, 22, text);
-    DrawText(thinking ? "positions searched - live" : "search nodes this turn",
+    DrawText(thinking ? "positions searched - live" : "nodes in latest search",
              x + 28, 207, 11, muted);
 
     DrawText("EVALUATION", x + 18, 238, 12, muted);
