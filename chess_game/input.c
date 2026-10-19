@@ -28,6 +28,11 @@ static int capturedByWhiteCount = 0;
 static int capturedByBlackCount = 0;
 static char gameStatus[96] = "Your turn - White";
 static bool gameOver = false;
+static int engineDepth = 5;
+
+void SetEngineDepth(int depth){
+    if(depth >= 2 && depth <= 8) engineDepth = depth;
+}
 
 static void recordMoveForUI(Move move){
     if(move.from < 0 || move.from >= 64 || move.to < 0 || move.to >= 64){
@@ -243,7 +248,7 @@ static DWORD WINAPI computerSearchThread(LPVOID arg){
     promotionMenu.active=false;
     initZobrist();
 
-    task->result=findBestMove(5);
+    task->result=findBestMove(engineDepth);
     InterlockedExchange(&task->finished,1);
     return 0;
 }
@@ -261,7 +266,7 @@ void startComputerSearch(void){
     computerSearch.thread=CreateThread(NULL,0,computerSearchThread,&computerSearch,0,NULL);
     if(computerSearch.thread==NULL){
         fprintf(stderr,"Could not start engine worker thread; using synchronous fallback.\n");
-        computerSearch.result=findBestMove(5);
+        computerSearch.result=findBestMove(engineDepth);
         InterlockedExchange(&computerSearch.finished,1);
         computerSearch.threadStarted=false;
         computerSearch.running=true;
