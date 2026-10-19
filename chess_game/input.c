@@ -29,9 +29,18 @@ static int capturedByBlackCount = 0;
 static char gameStatus[96] = "Your turn - White";
 static bool gameOver = false;
 static int engineDepth = 5;
+static bool humanPlaysWhite = true;
 
 void SetEngineDepth(int depth){
     if(depth >= 2 && depth <= 8) engineDepth = depth;
+}
+
+void SetPlayerColor(bool playWhite){
+    humanPlaysWhite = playWhite;
+    snprintf(gameStatus, sizeof(gameStatus), "Your turn - %s", playWhite ? "White" : "Black");
+    if(currentTurn != (humanPlaysWhite ? WHITE_TURN : BLACK_TURN)){
+        startComputerSearch();
+    }
 }
 
 static void recordMoveForUI(Move move){
@@ -87,8 +96,9 @@ bool IsGameOver(void){ return gameOver; }
 void HandleMouseInput(Vector2 mouse){
 
     if(gameOver){ return; }
-    // The human controls White; ignore input while the engine is thinking.
-    if(currentTurn!=WHITE_TURN){
+    // Only accept input when it is the human's turn.
+    Turn humanTurn = humanPlaysWhite ? WHITE_TURN : BLACK_TURN;
+    if(currentTurn!=humanTurn){
         return;
     }
 
@@ -143,7 +153,7 @@ void HandleMouseInput(Vector2 mouse){
             return;
         }
 
-        if(isBlackPiece(piece)){
+        if((humanPlaysWhite && !isWhitePiece(piece)) || (!humanPlaysWhite && !isBlackPiece(piece))){
             selectedSquare=-1;
             selectedPiece=EMPTY;
             moveCount=0;
@@ -254,7 +264,8 @@ static DWORD WINAPI computerSearchThread(LPVOID arg){
 }
 
 void startComputerSearch(void){
-    if(gameOver || currentTurn!=BLACK_TURN || computerSearch.running){
+    Turn humanTurn = humanPlaysWhite ? WHITE_TURN : BLACK_TURN;
+    if(gameOver || currentTurn==humanTurn || computerSearch.running){
         return;
     }
 
