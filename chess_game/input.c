@@ -1,8 +1,8 @@
 #include<stdio.h>
 #include<raylib.h>
 #include<stdlib.h>
-#include <threads.h>
-#include <stdatomic.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 #include"evaluate.h"
 #include "board.h"
@@ -158,15 +158,15 @@ typedef struct {
     Board snapshot;
     Turn turn;
     Move result;
-    atomic_bool finished;
-    thrd_t thread;
+    volatile LONG finished;
+    HANDLE thread;
     bool running;
     bool threadStarted;
 } ComputerSearchTask;
 
 static ComputerSearchTask computerSearch;
 
-static int computerSearchThread(void *arg){
+static DWORD WINAPI computerSearchThread(LPVOID arg){
     ComputerSearchTask *task=(ComputerSearchTask *)arg;
     board=task->snapshot;
     currentTurn=task->turn;
@@ -177,7 +177,7 @@ static int computerSearchThread(void *arg){
     initZobrist();
 
     task->result=findBestMove(5);
-    atomic_store_explicit(&task->finished,true,memory_order_release);
+    InterlockedExchange(&task->finished,1);
     return 0;
 }
 
@@ -189,12 +189,13 @@ void startComputerSearch(void){
     computerSearch.snapshot=board;
     computerSearch.turn=currentTurn;
     computerSearch.result=(Move){-1,-1};
-    atomic_store_explicit(&computerSearch.finished,false,memory_order_relaxed);
+    InterlockedExchange(&computerSearch.finished,0);
 
-    if(thrd_create(&computerSearch.thread,computerSearchThread,&computerSearch)!=thrd_success){
+    computerSearch.thread=CreateThread(NULL,0,computerSearchThread,&computerSearch,0,NULL);
+    if(computerSearch.thread==NULL){
         fprintf(stderr,"Could not start engine worker thread; using synchronous fallback.\n");
         computerSearch.result=findBestMove(5);
-        atomic_store_explicit(&computerSearch.finished,true,memory_order_release);
+        InterlockedExchange(&computerSearch.finished,1);
         computerSearch.threadStarted=false;
         computerSearch.running=true;
         return;
@@ -205,12 +206,14 @@ void startComputerSearch(void){
 
 void UpdateComputerSearch(void){
     if(!computerSearch.running ||
-       !atomic_load_explicit(&computerSearch.finished,memory_order_acquire)){
+       InterlockedCompareExchange(&computerSearch.finished,0,0)==0){
         return;
     }
 
     if(computerSearch.threadStarted){
-        thrd_join(computerSearch.thread,NULL);
+        WaitForSingleObject(computerSearch.thread,INFINITE);
+        CloseHandle(computerSearch.thread);
+        computerSearch.thread=NULL;
         computerSearch.threadStarted=false;
     }
     computerSearch.running=false;

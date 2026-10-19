@@ -8,9 +8,8 @@ static _Thread_local long long counter=0;
 
 int negamax(int depth, int alpha, int beta){
     counter++;
-    
-    if(depth==0){
 
+    if(depth==0){
         int score=evaluate();
         return (currentTurn==WHITE_TURN)?score:-score;
     }
@@ -25,25 +24,47 @@ int negamax(int depth, int alpha, int beta){
         return 0;
     }
 
-    int bestScore= -INF;
+    int bestScore=-INF;
+    int selectedMoveScore=-INF;
+    int bestChaos=-1;
 
     for(int i=0;i<moveCount;i++){
         Piece capturedPiece;
         makeTemporaryMove(moveList[i],&capturedPiece);
 
         toggleTurn();
-        int score=-negamax(depth-1,-beta,-alpha);
-        
+        // Root candidates need exact scores for a meaningful chaos tie-break.
+        // Internal nodes still use the normal alpha-beta window.
+        int score=(depth==rootDepth)
+            ? -negamax(depth-1,-INF,INF)
+            : -negamax(depth-1,-beta,-alpha);
+
+        // Measure the position after each candidate root move, while its
+        // board state is still active. Chaos is only a root-level tie-breaker.
+        int candidateChaos=-1;
+        if(depth==rootDepth){
+            candidateChaos=calculateChaosMetric();
+        }
+
         toggleTurn();
         undoTemporaryMove(moveList[i],capturedPiece);
 
         if(score>bestScore){
             bestScore=score;
+        }
 
-            if(depth==rootDepth){
+        if(depth==rootDepth){
+            bool candidateWithinWindow=(score>=bestScore-CHAOS_SCORE_WINDOW);
+            bool selectedOutsideWindow=(selectedMoveScore<bestScore-CHAOS_SCORE_WINDOW);
+
+            if(candidateWithinWindow &&
+               (bestMove.from<0 || selectedOutsideWindow || candidateChaos>bestChaos)){
                 bestMove=moveList[i];
+                selectedMoveScore=score;
+                bestChaos=candidateChaos;
             }
         }
+
         if(score>alpha){
             alpha=score;
         }
