@@ -131,7 +131,8 @@ int main(void){
         int capturedByBlackCount = GetCapturedPieces(false, capturedByBlack,
                                                       MAX_UI_CAPTURED_PIECES);
         DrawEvaluationSidebar(evaluate(), capturedByWhite, capturedByWhiteCount,
-                              capturedByBlack, capturedByBlackCount);
+                              capturedByBlack, capturedByBlackCount,
+                              GetGameStatus(), IsComputerThinking(), GetSearchNodeCount());
 
         DrawFPS(10,10);
 
