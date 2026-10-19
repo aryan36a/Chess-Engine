@@ -23,7 +23,7 @@ void DrawCheckHighlight(void);
 
 int main(void){
 
-    InitWindow(BOARD_SIZE*TILE_SIZE,BOARD_SIZE*TILE_SIZE,"CHESS");
+    InitWindow(BOARD_SIZE*TILE_SIZE+SIDEBAR_WIDTH,BOARD_SIZE*TILE_SIZE,"CHESS");
 
     LoadPieceTextures();
     //Init zorbist
@@ -100,6 +100,9 @@ int main(void){
                 selected
             );
         }
+        Move lastMove;
+        GetLastMove(&lastMove);
+        DrawLastMoveHighlight(lastMove);
         DrawCheckHighlight();
         DrawBoardPieces();
         DrawPromotionMenu();
@@ -120,6 +123,15 @@ int main(void){
                 );
             }
         }
+
+        Piece capturedByWhite[MAX_UI_CAPTURED_PIECES];
+        Piece capturedByBlack[MAX_UI_CAPTURED_PIECES];
+        int capturedByWhiteCount = GetCapturedPieces(true, capturedByWhite,
+                                                     MAX_UI_CAPTURED_PIECES);
+        int capturedByBlackCount = GetCapturedPieces(false, capturedByBlack,
+                                                      MAX_UI_CAPTURED_PIECES);
+        DrawEvaluationSidebar(evaluate(), capturedByWhite, capturedByWhiteCount,
+                              capturedByBlack, capturedByBlackCount);
 
         DrawFPS(10,10);
 
