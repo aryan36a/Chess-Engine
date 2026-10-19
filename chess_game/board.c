@@ -842,8 +842,8 @@ void undoTemporaryMove(Move move, Piece capturedPiece){
     (void)move;
     (void)capturedPiece;
     
-    if(boardTop>=MAX_PLY){
-        printf("Error: boardStack Overflow.\n");
+    if(boardTop <= 0){
+        printf("Error: boardStack Underflow.\n");
         exit(EXIT_FAILURE);
     }
     
