@@ -1,4 +1,5 @@
 #include<stdio.h>
+#include<string.h>
 #include<raylib.h>
 #include<stdint.h>
 #include "board.h"
@@ -33,6 +34,7 @@ int main(int argc, char **argv){
     LoadPieceTextures();
 
     bool depthSelected = false;
+    bool colorSelected = false;
     int selectedDepth = 5;
     //Init zorbist
     initZobrist();
@@ -91,6 +93,32 @@ int main(int argc, char **argv){
             }
             DrawText("Higher depth takes longer to calculate.",ox+28,oy+215,15,(Color){158,167,181,255});
             DrawText("Select a depth to begin",ox+28,oy+248,15,(Color){110,168,255,255});
+            EndDrawing();
+            continue;
+        }
+
+        // After choosing search depth, choose which side the human controls.
+        if(depthSelected && !colorSelected){
+            const int ow=520, oh=250;
+            int ox=(BOARD_SIZE*TILE_SIZE+SIDEBAR_WIDTH-ow)/2;
+            int oy=(BOARD_SIZE*TILE_SIZE-oh)/2;
+            DrawRectangleRounded((Rectangle){(float)ox,(float)oy,(float)ow,(float)oh},0.06f,12,(Color){29,32,39,255});
+            DrawRectangle(ox,oy,ow,5,(Color){110,168,255,255});
+            DrawText("CHESS ENGINE",ox+28,oy+24,14,(Color){158,167,181,255});
+            DrawText("Choose your colour",ox+28,oy+52,28,RAYWHITE);
+            DrawText("The engine will play the opposite side.",ox+28,oy+91,16,(Color){158,167,181,255});
+            Rectangle whiteButton={(float)(ox+36),(float)(oy+135),210,58};
+            Rectangle blackButton={(float)(ox+274),(float)(oy+135),210,58};
+            bool whiteHot=CheckCollisionPointRec(mouse,whiteButton);
+            bool blackHot=CheckCollisionPointRec(mouse,blackButton);
+            DrawRectangleRounded(whiteButton,0.14f,8,whiteHot?(Color){75,112,160,255}:(Color){45,51,62,255});
+            DrawRectangleRounded(blackButton,0.14f,8,blackHot?(Color){75,112,160,255}:(Color){45,51,62,255});
+            DrawText("Play White",(int)whiteButton.x+54,(int)whiteButton.y+19,20,RAYWHITE);
+            DrawText("Play Black",(int)blackButton.x+54,(int)blackButton.y+19,20,RAYWHITE);
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && (whiteHot || blackHot)){
+                SetPlayerColor(whiteHot);
+                colorSelected=true;
+            }
             EndDrawing();
             continue;
         }

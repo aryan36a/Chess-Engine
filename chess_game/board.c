@@ -57,6 +57,14 @@ void clearBoard(void){
 void initBoard(void)
 
 {
+    // Every new game starts with White to move; do not inherit the previous game's turn.
+    currentTurn = WHITE_TURN;
+    boardTop = 0;
+    selectedSquare = -1;
+    selectedPiece = EMPTY;
+    moveCount = 0;
+    promotionMenu = (PromotionMenu){false, -1, EMPTY};
+
     // Clear everything
     board.whitePawns   = 0ULL;
     board.whiteKnights = 0ULL;
