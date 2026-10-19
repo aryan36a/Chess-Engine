@@ -2,6 +2,8 @@
 #include<raylib.h>
 #include<stdlib.h>
 #define WIN32_LEAN_AND_MEAN
+#define NOGDI
+#define NOUSER
 #include <windows.h>
 
 #include"evaluate.h"
