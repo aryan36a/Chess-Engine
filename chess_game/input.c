@@ -192,7 +192,7 @@ void startComputerSearch(void){
     atomic_store_explicit(&computerSearch.finished,false,memory_order_relaxed);
 
     if(thrd_create(&computerSearch.thread,computerSearchThread,&computerSearch)!=thrd_success){
-        fprintf(stderr,"Could not start engine worker thread; using synchronous fallback.\\n");
+        fprintf(stderr,"Could not start engine worker thread; using synchronous fallback.\n");
         computerSearch.result=findBestMove(5);
         atomic_store_explicit(&computerSearch.finished,true,memory_order_release);
         computerSearch.threadStarted=false;
@@ -219,7 +219,7 @@ void UpdateComputerSearch(void){
         return;
     }
 
-    printf("Computer plays:%d -> %d\\n",best.from,best.to);
+    printf("Computer plays:%d -> %d\n",best.from,best.to);
     makeMove(best);
     finalizePromotionIfNeeded(best);
     toggleTurn();
