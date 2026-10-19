@@ -7,6 +7,7 @@
 #define MAX_UI_CAPTURED_PIECES 32
 
 void HandleMouseInput(Vector2 mouse);
+void SetEngineDepth(int depth);
 
 void HandlePromotionClick(Vector2 mouse);
 void UpdateComputerSearch(void);
