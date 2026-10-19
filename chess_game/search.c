@@ -242,7 +242,7 @@ Move findBestMove(int depth){
             best=task.rootMoves[i]; chosenChaos=task.chaos[i];
         }
     }
-    printf("Parallel root search: %d workers, iterative depth 1-%d\n",started,depth);
-    printf("Search nodes: %llu\n",GetSearchNodeCount());
+    fprintf(stderr,"Parallel root search: %d workers, iterative depth 1-%d\n",started,depth);
+    fprintf(stderr,"Search nodes: %llu\n",GetSearchNodeCount());
     return best;
 }
