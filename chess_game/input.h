@@ -12,5 +12,8 @@ void HandlePromotionClick(Vector2 mouse);
 void UpdateComputerSearch(void);
 void GetLastMove(Move *move);
 int GetCapturedPieces(bool capturedByWhite, Piece out[], int capacity);
+const char *GetGameStatus(void);
+bool IsGameOver(void);
+bool IsComputerThinking(void);
 
 #endif
