@@ -51,6 +51,7 @@ int main(void){
 
     while(!WindowShouldClose()){
 
+        UpdateComputerSearch();
         Vector2 mouse=GetMousePosition();
 
         BeginDrawing();
