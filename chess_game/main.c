@@ -21,7 +21,12 @@ void DrawBoardPieces(void);
 void toggleTurn(void);
 void DrawCheckHighlight(void);
 
-int main(void){
+int runUciMode(void);
+
+int main(int argc, char **argv){
+    if(argc > 1 && strcmp(argv[1], "--uci") == 0){
+        return runUciMode();
+    }
 
     InitWindow(BOARD_SIZE*TILE_SIZE+SIDEBAR_WIDTH,BOARD_SIZE*TILE_SIZE,"CHESS");
 
