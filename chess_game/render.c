@@ -106,25 +106,6 @@ static void DrawCapturedPieceRow(const char *label, const Piece pieces[],
     }
 }
 
-static void DrawCapturedPieceRow(const char *label, const Piece pieces[],
-                                 int count, int x, int y, int maxWidth){
-    DrawText(label, x, y, 16, (Color){205, 211, 222, 255});
-    int iconSize = 25;
-    int gap = 2;
-    int perRow = maxWidth / (iconSize + gap);
-    if(perRow < 1) perRow = 1;
-    for(int i = 0; i < count; ++i){
-        int col = i % perRow;
-        int row = i / perRow;
-        Rectangle source = {0, 0, (float)pieceTextures[pieces[i]].width,
-                            (float)pieceTextures[pieces[i]].height};
-        Rectangle dest = {(float)(x + col * (iconSize + gap)),
-                          (float)(y + 22 + row * (iconSize + 2)),
-                          (float)iconSize, (float)iconSize};
-        DrawTexturePro(pieceTextures[pieces[i]], source, dest,
-                       (Vector2){0, 0}, 0.0f, WHITE);
-    }
-}
 
 static void FormatNodeCount(unsigned long long nodes, char *out, size_t capacity){
     if(nodes >= 1000000000ULL){
