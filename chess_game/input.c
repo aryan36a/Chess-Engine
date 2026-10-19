@@ -21,6 +21,58 @@ void toggleTurn(void);
 void detectCheckAndStaleMate(void);
 void startComputerSearch(void);
 
+static Move lastPlayedMove = {-1, -1};
+static Piece capturedByWhite[MAX_UI_CAPTURED_PIECES];
+static Piece capturedByBlack[MAX_UI_CAPTURED_PIECES];
+static int capturedByWhiteCount = 0;
+static int capturedByBlackCount = 0;
+
+static void recordMoveForUI(Move move){
+    if(move.from < 0 || move.from >= 64 || move.to < 0 || move.to >= 64){
+        return;
+    }
+
+    Piece movingPiece = GetPieceAtSquare(move.from);
+    Piece capturedPiece = GetPieceAtSquare(move.to);
+    if((movingPiece == WHITE_PAWN || movingPiece == BLACK_PAWN) &&
+       move.to == board.enPassantSquare && move.from % 8 != move.to % 8){
+        int capturedSquare = (movingPiece == WHITE_PAWN) ? move.to + 8 : move.to - 8;
+        capturedPiece = GetPieceAtSquare(capturedSquare);
+    }
+
+    lastPlayedMove = move;
+    if(capturedPiece == EMPTY){
+        return;
+    }
+
+    bool whiteMoved = isWhitePiece(movingPiece);
+    Piece *capturedList = whiteMoved ? capturedByWhite : capturedByBlack;
+    int *capturedCount = whiteMoved ? &capturedByWhiteCount : &capturedByBlackCount;
+    if(*capturedCount < MAX_UI_CAPTURED_PIECES){
+        capturedList[(*capturedCount)++] = capturedPiece;
+    }
+}
+
+void GetLastMove(Move *move){
+    if(move != NULL){
+        *move = lastPlayedMove;
+    }
+}
+
+int GetCapturedPieces(bool capturedByWhiteSide, Piece out[], int capacity){
+    if(out == NULL || capacity <= 0){
+        return 0;
+    }
+    const Piece *source = capturedByWhiteSide ? capturedByWhite : capturedByBlack;
+    int count = capturedByWhiteSide ? capturedByWhiteCount : capturedByBlackCount;
+    if(count > capacity){
+        count = capacity;
+    }
+    for(int i = 0; i < count; ++i){
+        out[i] = source[i];
+    }
+    return count;
+}
 
 void HandleMouseInput(Vector2 mouse){
 
@@ -44,6 +96,7 @@ void HandleMouseInput(Vector2 mouse){
         if(isLegalMove(clickedSquare)){
 
             Move move={selectedSquare,clickedSquare};
+            recordMoveForUI(move);
             makeMove(move);
 
             if(selectedPiece==WHITE_PAWN&&clickedSquare<8){
@@ -229,6 +282,7 @@ void UpdateComputerSearch(void){
     }
 
     printf("Computer plays:%d -> %d\n",best.from,best.to);
+    recordMoveForUI(best);
     makeMove(best);
     finalizePromotionIfNeeded(best);
     toggleTurn();
