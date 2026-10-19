@@ -244,8 +244,8 @@ void DrawCheckHighlight(void){
         }
         if(kingSquare!=-1){
 
-            int row=kingSquare/8;
-            int col=kingSquare%8;
+            int row=BoardDisplayRow(kingSquare);
+            int col=BoardDisplayCol(kingSquare);
             DrawRectangle(
                 col*TILE_SIZE,
                 row*TILE_SIZE,
