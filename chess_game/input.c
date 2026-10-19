@@ -156,6 +156,7 @@ typedef struct {
     atomic_bool finished;
     thrd_t thread;
     bool running;
+    bool threadStarted;
 } ComputerSearchTask;
 
 static ComputerSearchTask computerSearch;
@@ -189,9 +190,11 @@ void startComputerSearch(void){
         fprintf(stderr,"Could not start engine worker thread; using synchronous fallback.\\n");
         computerSearch.result=findBestMove(5);
         atomic_store_explicit(&computerSearch.finished,true,memory_order_release);
+        computerSearch.threadStarted=false;
         computerSearch.running=true;
         return;
     }
+    computerSearch.threadStarted=true;
     computerSearch.running=true;
 }
 
@@ -201,7 +204,10 @@ void UpdateComputerSearch(void){
         return;
     }
 
-    thrd_join(computerSearch.thread,NULL);
+    if(computerSearch.threadStarted){
+        thrd_join(computerSearch.thread,NULL);
+        computerSearch.threadStarted=false;
+    }
     computerSearch.running=false;
     Move best=computerSearch.result;
     if(best.from<0 || best.from>=64 || best.to<0 || best.to>=64){
