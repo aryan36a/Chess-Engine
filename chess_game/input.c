@@ -26,6 +26,8 @@ static Piece capturedByWhite[MAX_UI_CAPTURED_PIECES];
 static Piece capturedByBlack[MAX_UI_CAPTURED_PIECES];
 static int capturedByWhiteCount = 0;
 static int capturedByBlackCount = 0;
+static char gameStatus[96] = "Your turn - White";
+static bool gameOver = false;
 
 static void recordMoveForUI(Move move){
     if(move.from < 0 || move.from >= 64 || move.to < 0 || move.to >= 64){
@@ -74,8 +76,12 @@ int GetCapturedPieces(bool capturedByWhiteSide, Piece out[], int capacity){
     return count;
 }
 
+const char *GetGameStatus(void){ return gameStatus; }
+bool IsGameOver(void){ return gameOver; }
+
 void HandleMouseInput(Vector2 mouse){
 
+    if(gameOver){ return; }
     // The human controls White; ignore input while the engine is thinking.
     if(currentTurn!=WHITE_TURN){
         return;
@@ -225,6 +231,8 @@ typedef struct {
 
 static ComputerSearchTask computerSearch;
 
+bool IsComputerThinking(void){ return computerSearch.running; }
+
 static DWORD WINAPI computerSearchThread(LPVOID arg){
     ComputerSearchTask *task=(ComputerSearchTask *)arg;
     board=task->snapshot;
@@ -241,7 +249,7 @@ static DWORD WINAPI computerSearchThread(LPVOID arg){
 }
 
 void startComputerSearch(void){
-    if(currentTurn!=BLACK_TURN || computerSearch.running){
+    if(gameOver || currentTurn!=BLACK_TURN || computerSearch.running){
         return;
     }
 
@@ -278,6 +286,7 @@ void UpdateComputerSearch(void){
     computerSearch.running=false;
     Move best=computerSearch.result;
     if(best.from<0 || best.from>=64 || best.to<0 || best.to>=64){
+        snprintf(gameStatus, sizeof(gameStatus), "Engine could not find a legal move");
         return;
     }
 

@@ -5,9 +5,15 @@
 static _Thread_local Move bestMove;
 static _Thread_local int rootDepth;
 static _Thread_local long long counter=0;
+static unsigned long long liveNodeCount=0;
+
+unsigned long long GetSearchNodeCount(void){
+    return __atomic_load_n(&liveNodeCount, __ATOMIC_RELAXED);
+}
 
 int negamax(int depth, int alpha, int beta){
     counter++;
+    __atomic_add_fetch(&liveNodeCount, 1ULL, __ATOMIC_RELAXED);
 
     if(depth==0){
         int score=evaluate();
@@ -81,6 +87,7 @@ Move findBestMove(int depth){
     bestMove.to=-1;
     rootDepth=depth;
     counter=0;
+    __atomic_store_n(&liveNodeCount, 0ULL, __ATOMIC_RELAXED);
     negamax(depth,-INF,INF);
     printf("Leaf Evaluations:%lld\n",counter);
     return bestMove;

@@ -56,7 +56,7 @@ int main(void){
 
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground((Color){24, 27, 33, 255});
 
         //Render Board
         for(int col=0;col<BOARD_SIZE;col++){
@@ -70,9 +70,9 @@ int main(void){
                 };
 
                 if((row+col)%2!=0){
-                    DrawRectangleRec(square,GRAY);
+                    DrawRectangleRec(square,(Color){118, 150, 86, 255});
                 }else{
-                    DrawRectangleRec(square,WHITE);
+                    DrawRectangleRec(square,(Color){238, 238, 210, 255});
                 }
 
                 if(CheckCollisionPointRec(mouse,square)){
@@ -131,7 +131,8 @@ int main(void){
         int capturedByBlackCount = GetCapturedPieces(false, capturedByBlack,
                                                       MAX_UI_CAPTURED_PIECES);
         DrawEvaluationSidebar(evaluate(), capturedByWhite, capturedByWhiteCount,
-                              capturedByBlack, capturedByBlackCount);
+                              capturedByBlack, capturedByBlackCount,
+                              GetGameStatus(), IsComputerThinking(), GetSearchNodeCount());
 
         DrawFPS(10,10);
 
