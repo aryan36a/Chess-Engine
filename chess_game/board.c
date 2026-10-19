@@ -18,6 +18,12 @@ _Thread_local PromotionMenu promotionMenu={false,-1,EMPTY};
 #define MAX_PLY 128
 static _Thread_local Board boardStack[MAX_PLY];
 static _Thread_local int boardTop=0;
+static bool boardFlipped = false;
+
+void SetBoardFlipped(bool flipped){ boardFlipped = flipped; }
+bool IsBoardFlipped(void){ return boardFlipped; }
+int BoardDisplayRow(int square){ return boardFlipped ? 7 - square / 8 : square / 8; }
+int BoardDisplayCol(int square){ return boardFlipped ? 7 - square % 8 : square % 8; }
 
 //zorbist hashing
 static _Thread_local uint64_t zobristPieces[12][64];
