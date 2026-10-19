@@ -18,6 +18,11 @@ void startComputerSearch(void);
 
 void HandleMouseInput(Vector2 mouse){
 
+    // The human controls White; ignore input while the engine is thinking.
+    if(currentTurn!=WHITE_TURN){
+        return;
+    }
+
     if(promotionMenu.active){
         HandlePromotionClick(mouse);
         return;
