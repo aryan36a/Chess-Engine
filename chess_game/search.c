@@ -2,9 +2,9 @@
 #include "board.h"
 #include "evaluate.h"
 
-static Move bestMove;
-static int rootDepth;
-static long long counter=0;
+static _Thread_local Move bestMove;
+static _Thread_local int rootDepth;
+static _Thread_local long long counter=0;
 
 int negamax(int depth, int alpha, int beta){
     counter++;
