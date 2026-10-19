@@ -70,7 +70,8 @@ static DWORD WINAPI parallelRootWorker(LPVOID argument){
     currentTurn=task->turn;
     rootDepth=task->depth;
     counter=0;
-    initZobrist();
+    // Zobrist keys are initialized by the main thread before search starts.
+    // Do not mutate shared hash keys from worker threads.
     for(;;){
         LONG index=InterlockedIncrement(&task->nextIndex)-1;
         if(index>=task->moveCount) break;
