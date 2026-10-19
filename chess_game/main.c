@@ -26,6 +26,9 @@ int main(void){
     InitWindow(BOARD_SIZE*TILE_SIZE+SIDEBAR_WIDTH,BOARD_SIZE*TILE_SIZE,"CHESS");
 
     LoadPieceTextures();
+
+    bool depthSelected = false;
+    int selectedDepth = 5;
     //Init zorbist
     initZobrist();
 
@@ -57,6 +60,35 @@ int main(void){
         BeginDrawing();
 
         ClearBackground((Color){24, 27, 33, 255});
+
+        // Startup-only depth selection. It remains locked until the game closes.
+        if(!depthSelected){
+            const int ow=520, oh=300;
+            int ox=(BOARD_SIZE*TILE_SIZE+SIDEBAR_WIDTH-ow)/2;
+            int oy=(BOARD_SIZE*TILE_SIZE-oh)/2;
+            DrawRectangleRounded((Rectangle){(float)ox,(float)oy,(float)ow,(float)oh},0.06f,12,(Color){29,32,39,255});
+            DrawRectangle(ox,oy,ow,5,(Color){110,168,255,255});
+            DrawText("CHESS ENGINE",ox+28,oy+24,14,(Color){158,167,181,255});
+            DrawText("Choose difficulty",ox+28,oy+52,30,RAYWHITE);
+            DrawText("Search depth is fixed for this game.",ox+28,oy+94,16,(Color){158,167,181,255});
+            const int depths[7]={2,3,4,5,6,7,8};
+            const int bw=58,bh=54,gap=8;
+            int sx=ox+(ow-(7*bw+6*gap))/2;
+            for(int i=0;i<7;i++){
+                Rectangle b={(float)(sx+i*(bw+gap)),(float)(oy+140),(float)bw,(float)bh};
+                bool hot=CheckCollisionPointRec(mouse,b);
+                DrawRectangleRounded(b,0.16f,8,hot?(Color){75,112,160,255}:(Color){45,51,62,255});
+                char label[8]; snprintf(label,sizeof(label),"%d",depths[i]);
+                DrawText(label,(int)b.x+(bw-MeasureText(label,22))/2,(int)b.y+15,22,RAYWHITE);
+                if(hot && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                    selectedDepth=depths[i]; SetEngineDepth(selectedDepth); depthSelected=true;
+                }
+            }
+            DrawText("Higher depth takes longer to calculate.",ox+28,oy+215,15,(Color){158,167,181,255});
+            DrawText("Select a depth to begin",ox+28,oy+248,15,(Color){110,168,255,255});
+            EndDrawing();
+            continue;
+        }
 
         //Render Board
         for(int col=0;col<BOARD_SIZE;col++){
