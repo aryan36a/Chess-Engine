@@ -3,8 +3,12 @@
 #include<stdlib.h>
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
-#define NOUSER
+/* Avoid collisions with Raylib's CloseWindow() and ShowCursor(). */
+#define CloseWindow Win32ApiCloseWindow
+#define ShowCursor Win32ApiShowCursor
 #include <windows.h>
+#undef CloseWindow
+#undef ShowCursor
 
 #include"evaluate.h"
 #include "board.h"
@@ -232,4 +236,10 @@ void UpdateComputerSearch(void){
         board.positionHistory[board.historyCount++]=generateHash();
     }
     detectCheckAndStaleMate();
+
+    // Checkmate/stalemate detection generates moves as a side effect.
+    // Do not let those moves appear as a user's current selection.
+    selectedSquare=-1;
+    selectedPiece=EMPTY;
+    moveCount=0;
 }

@@ -104,18 +104,21 @@ int main(void){
         DrawBoardPieces();
         DrawPromotionMenu();
 
-        //Legal Move Indicators
-        for(int i=0;i<moveCount;i++){
+        // Legal moves belong to the selected piece only. Move generation
+        // also runs during checkmate/stalemate detection, so moveCount alone
+        // does not mean the user has selected a piece.
+        if(selectedSquare!=-1){
+            for(int i=0;i<moveCount;i++){
+                int row=moves[i].to/8;
+                int col=moves[i].to%8;
 
-            int row=moves[i].to/8;
-            int col=moves[i].to%8;
-
-            DrawCircle(
-                col*TILE_SIZE+TILE_SIZE/2,
-                row*TILE_SIZE+TILE_SIZE/2,
-                15,
-                GREEN
-            );
+                DrawCircle(
+                    col*TILE_SIZE+TILE_SIZE/2,
+                    row*TILE_SIZE+TILE_SIZE/2,
+                    15,
+                    GREEN
+                );
+            }
         }
 
         DrawFPS(10,10);
