@@ -88,18 +88,18 @@ typedef struct{
     Piece pawn;
 }PromotionMenu;
 
-extern PromotionMenu promotionMenu;
+extern _Thread_local PromotionMenu promotionMenu;
 
 //Global Variables
-extern Board board;
+extern _Thread_local Board board;
 
-extern Move moves[256];
+extern _Thread_local Move moves[256];
 
-extern int moveCount;
-extern int selectedSquare;
-extern Turn currentTurn;
+extern _Thread_local int moveCount;
+extern _Thread_local int selectedSquare;
+extern _Thread_local Turn currentTurn;
 
-extern Piece selectedPiece;
+extern _Thread_local Piece selectedPiece;
 
 bool hasLegalMoves(bool white);
 bool isCheckMate(bool white);
