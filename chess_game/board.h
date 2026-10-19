@@ -110,6 +110,10 @@ bool isThreeFoldRepetition(void);
 
 //Board Functions
 void initBoard(void);
+void SetBoardFlipped(bool flipped);
+bool IsBoardFlipped(void);
+int BoardDisplayRow(int square);
+int BoardDisplayCol(int square);
 
 bool isBitSet(uint64_t bitboard,int square);
 
