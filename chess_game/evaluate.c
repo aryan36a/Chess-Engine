@@ -118,6 +118,76 @@ int evaluate(void){
 
     return whiteScore-blackScore;
 }
+
+// Quantifies tactical complexity rather than positional advantage.
+// Used only as a tie-breaker between root moves with near-equal evaluations.
+int calculateChaosMetric(void)
+{
+    Move whiteMoves[256];
+    Move blackMoves[256];
+    int whiteMobility = generateAllMoves(true, whiteMoves);
+    int blackMobility = generateAllMoves(false, blackMoves);
+    int captureMoves = 0;
+    int attackedPieces = 0;
+    int hangingPieces = 0;
+    int contestedPieces = 0;
+
+    for (int i = 0; i < whiteMobility; ++i) {
+        Piece target = GetPieceAtSquare(whiteMoves[i].to);
+        Piece moving = GetPieceAtSquare(whiteMoves[i].from);
+        if (isBlackPiece(target) ||
+            ((moving == WHITE_PAWN) &&
+             whiteMoves[i].to == board.enPassantSquare &&
+             whiteMoves[i].from % 8 != whiteMoves[i].to % 8)) {
+            ++captureMoves;
+        }
+    }
+
+    for (int i = 0; i < blackMobility; ++i) {
+        Piece target = GetPieceAtSquare(blackMoves[i].to);
+        Piece moving = GetPieceAtSquare(blackMoves[i].from);
+        if (isWhitePiece(target) ||
+            ((moving == BLACK_PAWN) &&
+             blackMoves[i].to == board.enPassantSquare &&
+             blackMoves[i].from % 8 != blackMoves[i].to % 8)) {
+            ++captureMoves;
+        }
+    }
+
+    for (int square = 0; square < 64; ++square) {
+        Piece piece = GetPieceAtSquare(square);
+        if (piece == EMPTY) {
+            continue;
+        }
+
+        bool whitePiece = isWhitePiece(piece);
+        bool attackedByWhite = isSquareAttacked(square, true);
+        bool attackedByBlack = isSquareAttacked(square, false);
+        bool attackedByEnemy = whitePiece ? attackedByBlack : attackedByWhite;
+        bool defendedByOwnSide = whitePiece ? attackedByWhite : attackedByBlack;
+
+        if (attackedByEnemy) {
+            ++attackedPieces;
+            if (!defendedByOwnSide && piece != WHITE_KING && piece != BLACK_KING) {
+                ++hangingPieces;
+            }
+        }
+        if (attackedByWhite && attackedByBlack) {
+            ++contestedPieces;
+        }
+    }
+
+    int checks = (isKingInCheck(true) ? 1 : 0) +
+                 (isKingInCheck(false) ? 1 : 0);
+
+    return (whiteMobility + blackMobility) * 2
+         + captureMoves * 8
+         + attackedPieces * 5
+         + hangingPieces * 12
+         + contestedPieces * 4
+         + checks * 20;
+}
+
 void printEvaluationBreakdown(void)
 {
     printf("White Pawns   %d\n", evaluateBitboard(board.whitePawns, pawnTable, PAWN_VALUE, WHITE));
