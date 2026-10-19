@@ -31,7 +31,7 @@ $rounds = [Math]::Ceiling($Games / 2)
 Write-Host "Starting $Games games (approximately; $rounds paired rounds), depth $Depth"
 Write-Host "PGN: $pgn"
 $args = @(
-    '-engine', "name=AryanChess cmd=$engine proto=uci",
+    '-engine', "name=AryanChess cmd=$engine args=--uci proto=uci",
     '-engine', "name=Stockfish cmd=$stockfish proto=uci",
     '-each', "depth=$Depth",
     '-rounds', [string]$rounds,
