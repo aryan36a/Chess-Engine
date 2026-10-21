@@ -214,6 +214,7 @@ int main(int argc, char **argv){
     }
 
     UnloadPieceTextures();
+    DevMode_Shutdown();
 
     CloseWindow();
 
