@@ -2,3 +2,4 @@
 chess.exe
 tests/
 *.o
+engine_dev.log
