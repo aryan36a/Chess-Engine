@@ -12,7 +12,7 @@ to hide it.
 - Up to five legal moves for the human side, ranked using a static evaluation,
   check bonus, and centralization heuristic. These are rankings, not calibrated
   probabilities or a claim that the opponent will definitely play them.
-- Search activity, node count, and the last root score.
+- Live search activity and node count, plus static position evaluation from White's perspective.
 
 The candidate list is only shown when the human side is to move. While the
 engine is thinking, the HUD says that a direct next-move candidate list is not
@@ -20,8 +20,8 @@ available rather than pretending to predict a reply to an unplayed engine move.
 
 ## Decision log
 
-The GUI appends a trace to `chess_game/engine_dev.log` (relative to the working
-directory from which `chess.exe` is launched). It records observed moves,
+The GUI appends a trace to `engine_dev.log` in the working directory from which
+`chess.exe` is launched (normally `chess_game/` if you launch it from that folder). It records observed moves,
 opponent-model updates, inferred intentions, strategic goals, ranked candidate
 moves, search stats, and the engine's selected move. It appends across sessions;
 the file is excluded from Git.
