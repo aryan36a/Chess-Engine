@@ -2,6 +2,6 @@
 
 int runUciMode(void);
 
-int main(void){
+int ucimain(void){
     return runUciMode();
 }
