@@ -243,9 +243,9 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
         addHudLine("  #%d %s  score %+d  (%s)", i + 1, notation,
                    topCandidates[i].score, reason);
     }
-    addHudLine("Search: %s | nodes %llu | last score %d",
+    addHudLine("Search: %s | nodes %llu | static eval (White POV) %+d",
         IsComputerThinking() ? "running" : "idle",
-        GetSearchNodeCount(), GetSearchScore());
+        GetSearchNodeCount(), evaluate());
 
     if (!writeLog) return;
     logLine("=== POSITION DECISION TRACE ===");
@@ -280,9 +280,9 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
             pieceName(topCandidates[i].captured), topCandidates[i].givesCheck);
         logLine(line);
     }
-    snprintf(line, sizeof(line), "SEARCH: state=%s nodes=%llu lastScore=%d",
+    snprintf(line, sizeof(line), "SEARCH: state=%s nodes=%llu staticEvalWhitePOV=%d",
         IsComputerThinking() ? "running" : "idle",
-        GetSearchNodeCount(), GetSearchScore());
+        GetSearchNodeCount(), evaluate());
     logLine(line);
 }
 
@@ -342,6 +342,8 @@ void DevMode_HandleHotkey(void) {
 }
 
 void DevMode_Update(bool humanPlaysWhite) {
+    /* Human promotion is a two-step UI action; wait until the piece is chosen. */
+    if (promotionMenu.active) return;
     uint64_t hash = generateHash();
     if (!snapshotReady) {
         previousBoard = board;
@@ -386,8 +388,8 @@ void DevMode_Update(bool humanPlaysWhite) {
             logLine(line);
         } else {
             snprintf(line, sizeof(line),
-                "ENGINE DECISION: move=%s rootScore=%d nodes=%llu; search=negamax/alpha-beta; tie-break may prefer chaos within %d cp",
-                notation, GetSearchScore(), GetSearchNodeCount(), CHAOS_SCORE_WINDOW);
+                "ENGINE DECISION: move=%s postMoveStaticEvalWhitePOV=%d nodes=%llu; search=negamax/alpha-beta; tie-break may prefer chaos within %d cp",
+                notation, evaluate(), GetSearchNodeCount(), CHAOS_SCORE_WINDOW);
             logLine(line);
         }
     }
