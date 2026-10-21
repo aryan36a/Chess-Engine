@@ -79,7 +79,7 @@ int DevWindow_IsVisible(void) {
     return 0;
 #endif
 }
-void DevWindow_SetText(const char *title,const char *const *lines,int count) {
+void DevWindow_SetText(const char *title,const char lines[][128],int count) {
 #ifdef _WIN32
     if (title) { strncpy(hudTitle,title,sizeof(hudTitle)-1); hudTitle[sizeof(hudTitle)-1]=0; }
     hudLineCount=count<32?count:32;
