@@ -9,6 +9,7 @@
 #include "fen.h"
 #include "evaluate.h"
 #include "search.h"
+#include "dev_mode.h"
 
 #define BOARD_SIZE 8
 #define TILE_SIZE 128
@@ -40,6 +41,7 @@ int main(int argc, char **argv){
     initZobrist();
 
     initBoard(); //Only comment/disable if you are using FEN generator (Note: Game wont load if you comment this without a fen)
+    DevMode_Init();
     //loadFEN(""); //Enter your custom FEN here for testing purposes
 
     //Testing shit here
@@ -62,6 +64,10 @@ int main(int argc, char **argv){
     while(!WindowShouldClose()){
 
         UpdateComputerSearch();
+        if(depthSelected && colorSelected){
+            DevMode_HandleHotkey();
+            DevMode_Update(!IsBoardFlipped());
+        }
         Vector2 mouse=GetMousePosition();
 
         BeginDrawing();
@@ -200,6 +206,7 @@ int main(int argc, char **argv){
         DrawEvaluationSidebar(evaluate(), capturedByWhite, capturedByWhiteCount,
                               capturedByBlack, capturedByBlackCount,
                               GetGameStatus(), IsComputerThinking(), GetSearchNodeCount());
+        DevMode_DrawOverlay();
 
         DrawFPS(10,10);
 
