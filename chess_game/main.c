@@ -206,7 +206,6 @@ int main(int argc, char **argv){
         DrawEvaluationSidebar(evaluate(), capturedByWhite, capturedByWhiteCount,
                               capturedByBlack, capturedByBlackCount,
                               GetGameStatus(), IsComputerThinking(), GetSearchNodeCount());
-        DevMode_DrawOverlay();
 
         DrawFPS(10,10);
 
