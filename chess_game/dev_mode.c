@@ -336,7 +336,7 @@ void DevMode_HandleHotkey(void) {
         keySequenceIndex = pressed == 1 ? 1 : 0;
     }
     if (keySequenceIndex == (int)(sizeof(sequence) / sizeof(sequence[0]))) {
-        devVisible = !devVisible;
+        devVisible = !DevWindow_IsVisible();
         DevWindow_Show(devVisible);
         keySequenceIndex = 0;
         logLine(devVisible ? "DEV HUD ENABLED by 112358 hotkey" :
