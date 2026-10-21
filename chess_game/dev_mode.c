@@ -1,4 +1,5 @@
 #include "dev_mode.h"
+#include "dev_window.h"
 
 #include <raylib.h>
 #include <stdio.h>
@@ -247,6 +248,7 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
         IsComputerThinking() ? "running" : "idle",
         GetSearchNodeCount(), evaluate());
 
+    DevWindow_SetText("DEVELOPER INTELLIGENCE / PRIVATE HUD", (const char *const *)devLines, devLineCount);
     if (!writeLog) return;
     logLine("=== POSITION DECISION TRACE ===");
     char line[DEV_LINE_LENGTH];
@@ -288,6 +290,7 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
 
 void DevMode_Init(void) {
     OpponentModel_Init(&opponentProfile);
+    DevWindow_Init();
     decisionLog = fopen("engine_dev.log", "a");
     if (decisionLog) {
         logLine("");
@@ -333,7 +336,8 @@ void DevMode_HandleHotkey(void) {
         keySequenceIndex = pressed == 1 ? 1 : 0;
     }
     if (keySequenceIndex == (int)(sizeof(sequence) / sizeof(sequence[0]))) {
-        devVisible = !devVisible;
+        devVisible = !DevWindow_IsVisible();
+        DevWindow_Show(devVisible);
         keySequenceIndex = 0;
         logLine(devVisible ? "DEV HUD ENABLED by 112358 hotkey" :
                               "DEV HUD DISABLED by 112358 hotkey");
@@ -342,6 +346,7 @@ void DevMode_HandleHotkey(void) {
 }
 
 void DevMode_Update(bool humanPlaysWhite) {
+    DevWindow_Poll();
     /* Human promotion is a two-step UI action; wait until the piece is chosen. */
     if (promotionMenu.active) return;
     uint64_t hash = generateHash();
@@ -409,24 +414,10 @@ void DevMode_Update(bool humanPlaysWhite) {
     board = currentBoard;
 }
 
-void DevMode_DrawOverlay(void) {
-    if (!devVisible) return;
-    const int x = 16, y = 16, width = 790, height = 610;
-    DrawRectangle(x, y, width, height, (Color){13, 16, 22, 238});
-    DrawRectangle(x, y, width, 5, (Color){245, 190, 65, 255});
-    DrawText("DEVELOPER INTELLIGENCE  /  PRIVATE HUD", x + 18, y + 16, 18,
-             (Color){245, 190, 65, 255});
-    DrawText("Toggle: type 112358 | log: engine_dev.log | Esc still closes game",
-             x + 18, y + 42, 12, (Color){155, 165, 180, 255});
-    int lineY = y + 68;
-    for (int i = 0; i < devLineCount; ++i) {
-        DrawText(devLines[i], x + 18, lineY, 14, (Color){226, 231, 239, 255});
-        lineY += 21;
-        if (lineY > y + height - 12) break;
-    }
-}
+void DevMode_DrawOverlay(void) { /* HUD is rendered in its own native window. */ }
 
 void DevMode_Shutdown(void) {
+    DevWindow_Shutdown();
     if (decisionLog) {
         logLine("=== DEVELOPER DIAGNOSTICS SESSION ENDED ===");
         fclose(decisionLog);
