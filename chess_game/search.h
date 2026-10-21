@@ -11,5 +11,6 @@
 int negamax(int depth, int alpha,int beta);
 Move findBestMove(int depth);
 unsigned long long GetSearchNodeCount(void);
+int GetSearchScore(void);
 
 #endif

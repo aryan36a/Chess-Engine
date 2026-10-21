@@ -7,6 +7,7 @@
 #include "search.h"
 
 #define UCI_LINE_SIZE 4096
+#define UCI_SEARCH_DEPTH 5
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 static int squareFromText(const char *s) {
@@ -107,6 +108,10 @@ static void printBestMove(int depth) {
     char from[3], to[3];
     squareToText(best.from, from);
     squareToText(best.to, to);
+    int score = GetSearchScore();
+    if(currentTurn == BLACK_TURN) score = -score;
+    printf("info depth %d nodes %llu score cp %d pv %s%s\n",
+           depth, GetSearchNodeCount(), score, from, to);
     printf("bestmove %s%s", from, to);
     Piece moving = GetPieceAtSquare(best.from);
     if ((moving == WHITE_PAWN && best.to < 8) || (moving == BLACK_PAWN && best.to >= 56))
@@ -140,22 +145,8 @@ int runUciMode(void) {
             if (!setPosition(args))
                 fprintf(stderr, "info string invalid position command\n");
         } else if (strncmp(line, "go ", 3) == 0 || strcmp(line, "go") == 0) {
-            int depth = 5;
-            char copy[UCI_LINE_SIZE];
-            strncpy(copy, line, sizeof(copy) - 1);
-            copy[sizeof(copy) - 1] = '\0';
-            char *ctx = NULL;
-            char *part = strtok_s(copy, " \t", &ctx);
-            while ((part = strtok_s(NULL, " \t", &ctx)) != NULL) {
-                if (strcmp(part, "depth") == 0) {
-                    char *value = strtok_s(NULL, " \t", &ctx);
-                    if (value) depth = atoi(value);
-                    break;
-                }
-            }
-            if (depth < 1) depth = 1;
-            if (depth > 8) depth = 8;
-            printBestMove(depth);
+            /* This engine is intentionally benchmarked at a fixed depth. */
+            printBestMove(UCI_SEARCH_DEPTH);
         } else if (strcmp(line, "stop") == 0) {
             /* Search is synchronous; go completes before the next command is read. */
         } else if (strcmp(line, "quit") == 0) {

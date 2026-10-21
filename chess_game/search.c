@@ -26,9 +26,14 @@ static _Thread_local Move killerMoves[128][2];
 static _Thread_local int historyHeuristic[2][64][64];
 static _Thread_local long long localNodes;
 static unsigned long long liveNodeCount;
+static _Thread_local int lastSearchScore;
 
 unsigned long long GetSearchNodeCount(void){
     return __atomic_load_n(&liveNodeCount, __ATOMIC_RELAXED);
+}
+
+int GetSearchScore(void){
+    return lastSearchScore;
 }
 
 static uint64_t positionKey(void){
@@ -235,6 +240,7 @@ Move findBestMove(int depth){
 
     int bestScore=-INF;
     for(int i=0;i<count;i++) if(task.scores[i]>bestScore) bestScore=task.scores[i];
+    lastSearchScore=bestScore;
     int chosenChaos=-1;
     for(int i=0;i<count;i++){
         if(task.scores[i]>=bestScore-CHAOS_SCORE_WINDOW &&
