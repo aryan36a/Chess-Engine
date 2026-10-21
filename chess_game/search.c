@@ -26,14 +26,19 @@ static _Thread_local Move killerMoves[128][2];
 static _Thread_local int historyHeuristic[2][64][64];
 static _Thread_local long long localNodes;
 static unsigned long long liveNodeCount;
-static _Thread_local int lastSearchScore;
+static volatile LONG publishedSearchScore;
+static SearchRootAnalysis lastRootAnalysis;
 
 unsigned long long GetSearchNodeCount(void){
     return __atomic_load_n(&liveNodeCount, __ATOMIC_RELAXED);
 }
 
 int GetSearchScore(void){
-    return lastSearchScore;
+    return (int)InterlockedCompareExchange(&publishedSearchScore, 0, 0);
+}
+
+void GetSearchRootAnalysis(SearchRootAnalysis *out){
+    if (out) *out = lastRootAnalysis;
 }
 
 static uint64_t positionKey(void){
@@ -168,6 +173,8 @@ typedef struct {
     volatile LONG nextIndex;
     int scores[256];
     int chaos[256];
+    SearchRootCandidate candidates[256];
+    volatile LONG64 nodes;
 } ParallelRootTask;
 
 static DWORD WINAPI parallelRootWorker(LPVOID argument){
@@ -181,6 +188,7 @@ static DWORD WINAPI parallelRootWorker(LPVOID argument){
         if(index>=task->moveCount) break;
         Move root=task->rootMoves[index];
         int score=0;
+        Piece moving=GetPieceAtSquare(root.from);
         /* Iterative deepening per root candidate keeps its TT warm across depths. */
         for(int d=1;d<=task->depth;d++){
             board=task->snapshot; currentTurn=task->turn;
@@ -196,10 +204,23 @@ static DWORD WINAPI parallelRootWorker(LPVOID argument){
         makeTemporaryMove(root,&captured);
         toggleTurn();
         task->chaos[index]=calculateChaosMetric();
+        task->candidates[index].move=root;
+        task->candidates[index].captured=captured;
+        task->candidates[index].givesCheck=isKingInCheck(currentTurn==WHITE_TURN);
+        task->candidates[index].isPromotion=
+            (moving==WHITE_PAWN && root.to<8) ||
+            (moving==BLACK_PAWN && root.to>=56);
+        task->candidates[index].materialEval=evaluateMaterial();
+        task->candidates[index].positionalEval=evaluatePositional();
+        task->candidates[index].depth=task->depth;
+        task->candidates[index].bound=0;
+        task->candidates[index].pv[0]='\0';
         toggleTurn();
         undoTemporaryMove(root,captured);
         task->scores[index]=score;
+        task->candidates[index].score=score;
     }
+    InterlockedAdd64(&task->nodes,(LONG64)localNodes);
     return 0;
 }
 
@@ -211,7 +232,13 @@ Move findBestMove(int depth){
 
     Move rootMoves[256];
     int count=generateAllMoves(currentTurn==WHITE_TURN,rootMoves);
-    if(count<=0) return best;
+    if(count<=0){
+        memset(&lastRootAnalysis,0,sizeof(lastRootAnalysis));
+        lastRootAnalysis.selectedMove=best;
+        lastRootAnalysis.sideToMove=currentTurn;
+        InterlockedExchange(&publishedSearchScore,0);
+        return best;
+    }
 
     ParallelRootTask task={0};
     task.snapshot=board; task.turn=currentTurn; task.moveCount=count; task.depth=depth;
@@ -240,13 +267,42 @@ Move findBestMove(int depth){
 
     int bestScore=-INF;
     for(int i=0;i<count;i++) if(task.scores[i]>bestScore) bestScore=task.scores[i];
-    lastSearchScore=bestScore;
+    InterlockedExchange(&publishedSearchScore,bestScore);
     int chosenChaos=-1;
     for(int i=0;i<count;i++){
         if(task.scores[i]>=bestScore-CHAOS_SCORE_WINDOW &&
            (best.from<0 || task.chaos[i]>chosenChaos)){
             best=task.rootMoves[i]; chosenChaos=task.chaos[i];
         }
+    }
+    memset(&lastRootAnalysis,0,sizeof(lastRootAnalysis));
+    lastRootAnalysis.candidateCount=count;
+    lastRootAnalysis.completedDepth=depth;
+    lastRootAnalysis.selectedMove=best;
+    lastRootAnalysis.selectedScore=bestScore;
+    lastRootAnalysis.highestScore=bestScore;
+    lastRootAnalysis.rootMaterialEval=evaluateMaterial();
+    lastRootAnalysis.rootPositionalEval=evaluatePositional();
+    lastRootAnalysis.sideToMove=task.turn;
+    lastRootAnalysis.nodes=(unsigned long long)task.nodes;
+    for(int i=0;i<count;i++){
+        lastRootAnalysis.candidates[i]=task.candidates[i];
+        lastRootAnalysis.candidates[i].selected=
+            sameMove(task.rootMoves[i],best);
+    }
+    for(int i=1;i<count;i++){
+        SearchRootCandidate value=lastRootAnalysis.candidates[i];
+        int j=i;
+        while(j>0 &&
+              lastRootAnalysis.candidates[j-1].score<value.score){
+            lastRootAnalysis.candidates[j]=lastRootAnalysis.candidates[j-1];
+            --j;
+        }
+        lastRootAnalysis.candidates[j]=value;
+    }
+    for(int i=0;i<count;i++){
+        if(lastRootAnalysis.candidates[i].selected)
+            lastRootAnalysis.selectedScore=lastRootAnalysis.candidates[i].score;
     }
     fprintf(stderr,"Parallel root search: %d workers, iterative depth 1-%d\n",started,depth);
     fprintf(stderr,"Search nodes: %llu\n",GetSearchNodeCount());

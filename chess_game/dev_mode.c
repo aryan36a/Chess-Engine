@@ -19,14 +19,6 @@
 #define DEV_LINE_COUNT 24
 #define DEV_LINE_LENGTH 128
 #define DEV_MAX_CANDIDATES 5
-#define DEV_MAX_MOVES 256
-
-typedef struct {
-    Move move;
-    int score;
-    Piece captured;
-    bool givesCheck;
-} CandidateMove;
 
 static bool devVisible;
 static int keySequenceIndex;
@@ -38,8 +30,7 @@ static bool snapshotReady;
 static OpponentProfile opponentProfile;
 static char devLines[DEV_LINE_COUNT][DEV_LINE_LENGTH];
 static int devLineCount;
-static CandidateMove topCandidates[DEV_MAX_CANDIDATES];
-static int topCandidateCount;
+static SearchRootAnalysis rootAnalysis;
 static FILE *decisionLog;
 
 static void logTimestamp(void) {
@@ -67,18 +58,6 @@ static const char *pieceName(Piece p) {
         case WHITE_QUEEN: case BLACK_QUEEN: return "queen";
         case WHITE_KING: case BLACK_KING: return "king";
         default: return "none";
-    }
-}
-
-static int pieceValue(Piece p) {
-    switch (p) {
-        case WHITE_PAWN: case BLACK_PAWN: return 100;
-        case WHITE_KNIGHT: case BLACK_KNIGHT: return 320;
-        case WHITE_BISHOP: case BLACK_BISHOP: return 330;
-        case WHITE_ROOK: case BLACK_ROOK: return 500;
-        case WHITE_QUEEN: case BLACK_QUEEN: return 900;
-        case WHITE_KING: case BLACK_KING: return 20000;
-        default: return 0;
     }
 }
 
@@ -132,74 +111,8 @@ static void addHudLine(const char *fmt, ...) {
     ++devLineCount;
 }
 
-static int centerBonus(int square) {
-    int row = square / 8, col = square % 8;
-    int distance = abs(3 - row) + abs(3 - col);
-    return 6 - distance;
-}
-
-static void rankOpponentCandidates(bool humanWhite) {
-    topCandidateCount = 0;
-    if ((currentTurn == WHITE_TURN) != humanWhite) return;
-
-    Move savedMoves[256];
-    memcpy(savedMoves, moves, sizeof(savedMoves));
-    int savedMoveCount = moveCount;
-    int savedSelectedSquare = selectedSquare;
-    Piece savedSelectedPiece = selectedPiece;
-    Board position = board;
-    Turn savedTurn = currentTurn;
-    Move candidates[DEV_MAX_MOVES];
-    int count = generateAllMoves(humanWhite, candidates);
-    if (count > DEV_MAX_MOVES) count = DEV_MAX_MOVES;
-
-    CandidateMove ranked[DEV_MAX_MOVES];
-    int rankedCount = 0;
-    int before = evaluate();
-
-    for (int i = 0; i < count; ++i) {
-        board = position;
-        currentTurn = savedTurn;
-        Move move = candidates[i];
-        Piece captured = EMPTY;
-        makeTemporaryMove(move, &captured);
-        int whiteScore = evaluate();
-        bool givesCheck = isKingInCheck(!humanWhite);
-        undoTemporaryMove(move, captured);
-
-        int score = humanWhite ? whiteScore : -whiteScore;
-        score -= humanWhite ? before : -before;
-        if (givesCheck) score += 250;
-        score += centerBonus(move.to) * 4;
-        if (captured != EMPTY) score += pieceValue(captured) / 8;
-
-        ranked[rankedCount++] = (CandidateMove){move, score, captured, givesCheck};
-    }
-
-    for (int i = 1; i < rankedCount; ++i) {
-        CandidateMove value = ranked[i];
-        int j = i;
-        while (j > 0 && ranked[j - 1].score < value.score) {
-            ranked[j] = ranked[j - 1];
-            --j;
-        }
-        ranked[j] = value;
-    }
-
-    topCandidateCount = rankedCount < DEV_MAX_CANDIDATES ? rankedCount : DEV_MAX_CANDIDATES;
-    for (int i = 0; i < topCandidateCount; ++i) topCandidates[i] = ranked[i];
-
-    board = position;
-    currentTurn = savedTurn;
-    memcpy(moves, savedMoves, sizeof(savedMoves));
-    moveCount = savedMoveCount;
-    selectedSquare = savedSelectedSquare;
-    selectedPiece = savedSelectedPiece;
-}
-
 static void rebuildAnalysis(bool humanWhite, bool writeLog) {
     devLineCount = 0;
-    topCandidateCount = 0;
     bool engineWhite = !humanWhite;
     ThreatReport threats;
     OpponentIntent intents[8];
@@ -210,7 +123,75 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
         &threats, engineWhite, &opponentProfile, intents, 8);
     int goalCount = GoalManager_Update(
         engineWhite, &threats, intents, intentCount, goals, 8);
-    rankOpponentCandidates(humanWhite);
+    GetSearchRootAnalysis(&rootAnalysis);
+
+    addHudLine("CHOSEN MOVE");
+    if (rootAnalysis.candidateCount == 0 ||
+        rootAnalysis.selectedMove.from < 0) {
+        addHudLine("  no completed root search / no legal move");
+    } else {
+        char selected[8];
+        moveName(rootAnalysis.selectedMove, selected);
+        addHudLine("  %s  score %+d (%s POV) depth %d  selected=%s",
+            selected, rootAnalysis.selectedScore,
+            rootAnalysis.sideToMove == WHITE_TURN ? "White" : "Black",
+            rootAnalysis.completedDepth,
+            rootAnalysis.selectedScore == rootAnalysis.highestScore ?
+                "highest" : "chaos tie-break");
+    }
+    addHudLine("WHY THIS MOVE");
+    if (rootAnalysis.candidateCount > 0) {
+        const SearchRootCandidate *selected = NULL;
+        for (int i = 0; i < rootAnalysis.candidateCount; ++i) {
+            if (rootAnalysis.candidates[i].selected) {
+                selected = &rootAnalysis.candidates[i];
+                break;
+            }
+        }
+        if (selected) {
+            int materialDelta = selected->materialEval -
+                rootAnalysis.rootMaterialEval;
+            int positionalDelta = selected->positionalEval -
+                rootAnalysis.rootPositionalEval;
+            if (materialDelta != 0)
+                addHudLine("  material eval %+d (measured, White POV)", materialDelta);
+            if (positionalDelta != 0)
+                addHudLine("  positional eval %+d (measured, White POV)", positionalDelta);
+            if (selected->captured != EMPTY)
+                addHudLine("  captures %s (board move fact)", pieceName(selected->captured));
+            if (selected->givesCheck)
+                addHudLine("  gives check (board move fact)");
+            if (selected->isPromotion)
+                addHudLine("  promotes (board move fact)");
+            if (materialDelta == 0 && positionalDelta == 0 &&
+                selected->captured == EMPTY && !selected->givesCheck &&
+                !selected->isPromotion)
+                addHudLine("  no distinct measured factor; root score was decisive");
+            if (selected->score != rootAnalysis.highestScore)
+                addHudLine("  selected within %d cp; chaos tie-break applied",
+                    CHAOS_SCORE_WINDOW);
+        }
+    } else {
+        addHudLine("  search data is incomplete");
+    }
+    addHudLine("ALTERNATIVES (score from side-to-move POV)");
+    int alternatives = rootAnalysis.candidateCount < DEV_MAX_CANDIDATES ?
+        rootAnalysis.candidateCount : DEV_MAX_CANDIDATES;
+    for (int i = 0; i < alternatives; ++i) {
+        char notation[8];
+        moveName(rootAnalysis.candidates[i].move, notation);
+        addHudLine("  #%d %s %+d %s%s", i + 1, notation,
+            rootAnalysis.candidates[i].score,
+            rootAnalysis.candidates[i].selected ? "[SELECTED]" :
+                rootAnalysis.candidates[i].score > rootAnalysis.selectedScore ?
+                "higher score, not selected" : "lower searched score",
+            rootAnalysis.candidates[i].pv[0] ? " pv available" : "");
+    }
+    if (alternatives == 0) addHudLine("  no legal root candidates");
+    addHudLine("SEARCH CONTEXT");
+    addHudLine("  depth %d | nodes %llu | root candidates %d",
+        rootAnalysis.completedDepth, rootAnalysis.nodes,
+        rootAnalysis.candidateCount);
 
     addHudLine("Opponent model: %u observed moves | capture %.0f%% | check %.0f%% | castle %.0f%%",
         opponentProfile.observations, opponentProfile.captureRate * 100.0f,
@@ -230,25 +211,7 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
     for (int i = 0; i < goalCount && i < 3; ++i) {
         addHudLine("  %s  priority %.2f", goalName(goals[i].type), goals[i].priority);
     }
-    addHudLine("Opponent candidate moves (static heuristic ranking):");
-    if ((currentTurn == WHITE_TURN) != humanWhite) {
-        addHudLine("  waiting for engine move; opponent is not to move");
-    } else if (topCandidateCount == 0) {
-        addHudLine("  no legal moves");
-    }
-    for (int i = 0; i < topCandidateCount; ++i) {
-        char notation[8];
-        moveName(topCandidates[i].move, notation);
-        const char *reason = topCandidates[i].givesCheck ? "check" :
-            topCandidates[i].captured != EMPTY ? "capture" : "positional";
-        addHudLine("  #%d %s  score %+d  (%s)", i + 1, notation,
-                   topCandidates[i].score, reason);
-    }
-    addHudLine("Search: %s | nodes %llu | static eval (White POV) %+d",
-        IsComputerThinking() ? "running" : "idle",
-        GetSearchNodeCount(), evaluate());
-
-    DevWindow_SetText("DEVELOPER INTELLIGENCE / PRIVATE HUD", (const char *const *)devLines, devLineCount);
+    DevWindow_SetText("DEVELOPER INTELLIGENCE / PRIVATE HUD", devLines, devLineCount);
     if (!writeLog) return;
     logLine("=== POSITION DECISION TRACE ===");
     char line[DEV_LINE_LENGTH];
@@ -274,13 +237,51 @@ static void rebuildAnalysis(bool humanWhite, bool writeLog) {
             goalName(goals[i].type), goals[i].priority, goals[i].confidence);
         logLine(line);
     }
-    for (int i = 0; i < topCandidateCount; ++i) {
+    for (int i = 0; i < alternatives; ++i) {
         char notation[8];
-        moveName(topCandidates[i].move, notation);
-        snprintf(line, sizeof(line), "CANDIDATE #%d: %s score=%d capture=%s check=%d",
-            i + 1, notation, topCandidates[i].score,
-            pieceName(topCandidates[i].captured), topCandidates[i].givesCheck);
+        moveName(rootAnalysis.candidates[i].move, notation);
+        snprintf(line, sizeof(line),
+            "ROOT_CANDIDATE #%d: %s score=%d depth=%d bound=%s selected=%d capture=%s check=%d promotion=%d pv=%s",
+            i + 1, notation, rootAnalysis.candidates[i].score,
+            rootAnalysis.candidates[i].depth,
+            rootAnalysis.candidates[i].bound == 0 ? "exact" :
+                rootAnalysis.candidates[i].bound == 1 ? "lower" : "upper",
+            rootAnalysis.candidates[i].selected,
+            pieceName(rootAnalysis.candidates[i].captured),
+            rootAnalysis.candidates[i].givesCheck,
+            rootAnalysis.candidates[i].isPromotion,
+            rootAnalysis.candidates[i].pv[0] ? rootAnalysis.candidates[i].pv : "-");
         logLine(line);
+    }
+    snprintf(line, sizeof(line),
+        "ROOT_EXPLANATION: selected=%s score=%d highest=%d depth=%d nodes=%llu",
+        rootAnalysis.selectedMove.from >= 0 ? "move-present" : "none",
+        rootAnalysis.selectedScore, rootAnalysis.highestScore,
+        rootAnalysis.completedDepth, rootAnalysis.nodes);
+    logLine(line);
+    if (rootAnalysis.selectedMove.from >= 0) {
+        char selected[8];
+        moveName(rootAnalysis.selectedMove, selected);
+        snprintf(line, sizeof(line),
+            "SELECTED_MOVE: %s score=%d perspective=%s",
+            selected, rootAnalysis.selectedScore,
+            rootAnalysis.sideToMove == WHITE_TURN ? "white" : "black");
+        logLine(line);
+        for (int i = 0; i < rootAnalysis.candidateCount; ++i) {
+            const SearchRootCandidate *candidate = &rootAnalysis.candidates[i];
+            if (!candidate->selected) continue;
+            snprintf(line, sizeof(line),
+                "EXPLANATION_FACTOR: materialDelta=%d positionalDelta=%d source=evaluation_components",
+                candidate->materialEval - rootAnalysis.rootMaterialEval,
+                candidate->positionalEval - rootAnalysis.rootPositionalEval);
+            logLine(line);
+            snprintf(line, sizeof(line),
+                "EXPLANATION_FACTOR: capture=%d check=%d promotion=%d source=legal_board_state",
+                candidate->captured != EMPTY, candidate->givesCheck,
+                candidate->isPromotion);
+            logLine(line);
+            break;
+        }
     }
     snprintf(line, sizeof(line), "SEARCH: state=%s nodes=%llu staticEvalWhitePOV=%d",
         IsComputerThinking() ? "running" : "idle",

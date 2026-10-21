@@ -82,6 +82,8 @@ int DevWindow_IsVisible(void) {
 void DevWindow_SetText(const char *title,const char lines[][128],int count) {
 #ifdef _WIN32
     if (title) { strncpy(hudTitle,title,sizeof(hudTitle)-1); hudTitle[sizeof(hudTitle)-1]=0; }
+    if (count < 0) count = 0;
+    if (!lines) count = 0;
     hudLineCount=count<32?count:32;
     for(int i=0;i<hudLineCount;i++){
         strncpy(hudLines[i],lines[i]?lines[i]:"",sizeof(hudLines[i])-1);

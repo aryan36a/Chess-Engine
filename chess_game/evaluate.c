@@ -98,25 +98,45 @@ static int evaluateBitboard(uint64_t pieces,const int table[64],int value,int is
     return score;
 }
 
-int evaluate(void){
+int evaluateMaterial(void){
     int whiteScore=0;
     int blackScore=0;
 
-    whiteScore+=evaluateBitboard(board.whitePawns,pawnTable,PAWN_VALUE,WHITE);
-    whiteScore+=evaluateBitboard(board.whiteKnights,knightTable,KNIGHT_VALUE,WHITE);
-    whiteScore+=evaluateBitboard(board.whiteRooks,rookTable,ROOK_VALUE,WHITE);
-    whiteScore+=evaluateBitboard(board.whiteBishops,bishopTable,BISHOP_VALUE,WHITE);
-    whiteScore+=evaluateBitboard(board.whiteQueens,queenTable,QUEEN_VALUE,WHITE);
+    whiteScore += countPieces(board.whitePawns) * PAWN_VALUE;
+    whiteScore += countPieces(board.whiteKnights) * KNIGHT_VALUE;
+    whiteScore += countPieces(board.whiteBishops) * BISHOP_VALUE;
+    whiteScore += countPieces(board.whiteRooks) * ROOK_VALUE;
+    whiteScore += countPieces(board.whiteQueens) * QUEEN_VALUE;
+    blackScore += countPieces(board.blackPawns) * PAWN_VALUE;
+    blackScore += countPieces(board.blackKnights) * KNIGHT_VALUE;
+    blackScore += countPieces(board.blackBishops) * BISHOP_VALUE;
+    blackScore += countPieces(board.blackRooks) * ROOK_VALUE;
+    blackScore += countPieces(board.blackQueens) * QUEEN_VALUE;
+    return whiteScore - blackScore;
+}
+
+int evaluatePositional(void){
+    int whiteScore=0;
+    int blackScore=0;
+
+    whiteScore+=evaluateBitboard(board.whitePawns,pawnTable,0,WHITE);
+    whiteScore+=evaluateBitboard(board.whiteKnights,knightTable,0,WHITE);
+    whiteScore+=evaluateBitboard(board.whiteRooks,rookTable,0,WHITE);
+    whiteScore+=evaluateBitboard(board.whiteBishops,bishopTable,0,WHITE);
+    whiteScore+=evaluateBitboard(board.whiteQueens,queenTable,0,WHITE);
     whiteScore+=evaluateBitboard(board.whiteKing,kingTable,0,WHITE);
 
-    blackScore+=evaluateBitboard(board.blackPawns,pawnTable,PAWN_VALUE,BLACK);
-    blackScore+=evaluateBitboard(board.blackKnights,knightTable,KNIGHT_VALUE,BLACK);
-    blackScore+=evaluateBitboard(board.blackRooks,rookTable,ROOK_VALUE,BLACK);
-    blackScore+=evaluateBitboard(board.blackBishops,bishopTable,BISHOP_VALUE,BLACK);
-    blackScore+=evaluateBitboard(board.blackQueens,queenTable,QUEEN_VALUE,BLACK);
+    blackScore+=evaluateBitboard(board.blackPawns,pawnTable,0,BLACK);
+    blackScore+=evaluateBitboard(board.blackKnights,knightTable,0,BLACK);
+    blackScore+=evaluateBitboard(board.blackRooks,rookTable,0,BLACK);
+    blackScore+=evaluateBitboard(board.blackQueens,queenTable,0,BLACK);
+    blackScore+=evaluateBitboard(board.blackBishops,bishopTable,0,BLACK);
     blackScore+=evaluateBitboard(board.blackKing,kingTable,0,BLACK);
-
     return whiteScore-blackScore;
+}
+
+int evaluate(void){
+    return evaluateMaterial() + evaluatePositional();
 }
 
 // Quantifies tactical complexity rather than positional advantage.
