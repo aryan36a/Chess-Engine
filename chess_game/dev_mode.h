@@ -8,5 +8,6 @@ void DevMode_Init(void);
 void DevMode_HandleHotkey(void);
 void DevMode_Update(bool humanPlaysWhite);
 void DevMode_DrawOverlay(void);
+void DevMode_Shutdown(void);
 
 #endif
