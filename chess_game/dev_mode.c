@@ -303,9 +303,14 @@ static bool digitPressed(int digit) {
     switch (digit) {
         case 1: return IsKeyPressed(KEY_ONE) || IsKeyPressed(KEY_KP_1);
         case 2: return IsKeyPressed(KEY_TWO) || IsKeyPressed(KEY_KP_2);
+        case 0: return IsKeyPressed(KEY_ZERO) || IsKeyPressed(KEY_KP_0);
         case 3: return IsKeyPressed(KEY_THREE) || IsKeyPressed(KEY_KP_3);
+        case 4: return IsKeyPressed(KEY_FOUR) || IsKeyPressed(KEY_KP_4);
         case 5: return IsKeyPressed(KEY_FIVE) || IsKeyPressed(KEY_KP_5);
+        case 6: return IsKeyPressed(KEY_SIX) || IsKeyPressed(KEY_KP_6);
+        case 7: return IsKeyPressed(KEY_SEVEN) || IsKeyPressed(KEY_KP_7);
         case 8: return IsKeyPressed(KEY_EIGHT) || IsKeyPressed(KEY_KP_8);
+        case 9: return IsKeyPressed(KEY_NINE) || IsKeyPressed(KEY_KP_9);
         default: return false;
     }
 }
@@ -313,8 +318,8 @@ static bool digitPressed(int digit) {
 void DevMode_HandleHotkey(void) {
     static const int sequence[] = {1, 1, 2, 3, 5, 8};
     int pressed = 0;
-    const int digits[] = {1, 2, 3, 5, 8};
-    for (int i = 0; i < 5; ++i) {
+    const int digits[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    for (int i = 0; i < 10; ++i) {
         if (digitPressed(digits[i])) { pressed = digits[i]; break; }
     }
     if (!pressed) {
