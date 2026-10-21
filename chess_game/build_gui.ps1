@@ -11,7 +11,7 @@ if (-not $sourceFiles) {
 }
 
 $exePath = Join-Path $PSScriptRoot "chess.exe"
-& gcc @sourceFiles -o $exePath -lraylib
+& gcc @sourceFiles -o $exePath -lraylib -lgdi32 -luser32
 if ($LASTEXITCODE -ne 0) {
     throw "GCC build failed with exit code $LASTEXITCODE"
 }
