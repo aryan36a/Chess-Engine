@@ -352,7 +352,15 @@ void DevMode_Update(bool humanPlaysWhite) {
         snapshotReady = true;
         return;
     }
-    if (hash == previousHash) return;
+    if (hash == previousHash) {
+        if (devVisible && devLineCount > 0) {
+            snprintf(devLines[devLineCount - 1], DEV_LINE_LENGTH,
+                "Search: %s | nodes %llu | static eval (White POV) %+d",
+                IsComputerThinking() ? "running" : "idle",
+                GetSearchNodeCount(), evaluate());
+        }
+        return;
+    }
 
     Move last = {-1, -1};
     GetLastMove(&last);
