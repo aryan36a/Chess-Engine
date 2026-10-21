@@ -72,6 +72,13 @@ void DevWindow_Show(int visible) {
     (void)visible;
 #endif
 }
+int DevWindow_IsVisible(void) {
+#ifdef _WIN32
+    return hudWindow && IsWindowVisible(hudWindow);
+#else
+    return 0;
+#endif
+}
 void DevWindow_SetText(const char *title,const char *const *lines,int count) {
 #ifdef _WIN32
     if (title) { strncpy(hudTitle,title,sizeof(hudTitle)-1); hudTitle[sizeof(hudTitle)-1]=0; }
