@@ -379,6 +379,11 @@ void DevMode_Update(bool humanPlaysWhite) {
             snprintf(line, sizeof(line), "OPPONENT MODEL UPDATE: observations=%u",
                 opponentProfile.observations);
             logLine(line);
+        } else {
+            snprintf(line, sizeof(line),
+                "ENGINE DECISION: move=%s rootScore=%d nodes=%llu; search=negamax/alpha-beta; tie-break may prefer chaos within %d cp",
+                notation, GetSearchScore(), GetSearchNodeCount(), CHAOS_SCORE_WINDOW);
+            logLine(line);
         }
     }
 
@@ -403,5 +408,13 @@ void DevMode_DrawOverlay(void) {
         DrawText(devLines[i], x + 18, lineY, 14, (Color){226, 231, 239, 255});
         lineY += 21;
         if (lineY > y + height - 12) break;
+    }
+}
+
+void DevMode_Shutdown(void) {
+    if (decisionLog) {
+        logLine("=== DEVELOPER DIAGNOSTICS SESSION ENDED ===");
+        fclose(decisionLog);
+        decisionLog = NULL;
     }
 }
