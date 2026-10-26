@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=for-the-badge)](#-building-from-source)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-brightgreen?style=for-the-badge)](#-future-plans)
-[![Stars](https://img.shields.io/github/stars/yourusername/chess-engine-c?style=for-the-badge&color=yellow)](https://github.com/yourusername/chess-engine-c/stargazers)
+[![Stars](https://img.shields.io/github/stars/aryan36a/Chess-Engine?style=for-the-badge&color=yellow)](https://github.com/yourusername/chess-engine-c/stargazers)
 
 <br>
 
